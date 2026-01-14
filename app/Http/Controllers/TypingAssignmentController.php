@@ -13,12 +13,12 @@ class TypingAssignmentController extends Controller
     public function index()
     {
         $assignments = TypingAssignment::latest()->paginate(10);
-        
+
         // Mock stats for now or calculate from DB
         $totalAssignments = TypingAssignment::count();
         $activeAssignments = TypingAssignment::where('is_active', true)->count();
         $totalSubmissions = \App\Models\TypingSubmission::count();
-        
+
         return view('typing.admin.assignments', compact('assignments', 'totalAssignments', 'activeAssignments', 'totalSubmissions'));
     }
 
@@ -44,6 +44,7 @@ class TypingAssignmentController extends Controller
             'submission_type' => 'required|in:typing,file',
             'difficulty_level' => 'required|integer|min:1|max:5',
             'max_score' => 'required|integer|min:1',
+            'time_limit' => 'nullable|integer|min:1|max:60',
             'due_date' => 'nullable|date',
             'is_active' => 'boolean',
         ]);
@@ -96,7 +97,7 @@ class TypingAssignmentController extends Controller
     public function update(Request $request, $id)
     {
         $assignment = TypingAssignment::findOrFail($id);
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
@@ -106,6 +107,7 @@ class TypingAssignmentController extends Controller
             'submission_type' => 'required|in:typing,file',
             'difficulty_level' => 'required|integer|min:1|max:5',
             'max_score' => 'required|integer|min:1',
+            'time_limit' => 'nullable|integer|min:1|max:60',
             'due_date' => 'nullable|date',
             'is_active' => 'boolean',
         ]);
@@ -124,7 +126,7 @@ class TypingAssignmentController extends Controller
             if ($assignment->master_file_path && file_exists(public_path($assignment->master_file_path))) {
                 unlink(public_path($assignment->master_file_path));
             }
-            
+
             $file = $request->file('master_file');
             $filename = 'master_' . time() . '_' . $file->getClientOriginalName();
             $path = $file->storeAs('master_files', $filename, 'public');

@@ -269,8 +269,19 @@
                     },
 
                     startTimer() {
+                        // Clear any existing interval to prevent duplicates
+                        if (this.timerInterval) {
+                            clearInterval(this.timerInterval);
+                        }
+
                         this.startTime = Date.now();
                         this.timerInterval = setInterval(() => {
+                            // Safety check: if game is finished, stop everything
+                            if (this.isFinished) {
+                                clearInterval(this.timerInterval);
+                                return;
+                            }
+
                             this.timer = Math.floor((Date.now() - this.startTime) / 1000);
 
                             // If time limit is set, count down
