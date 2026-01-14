@@ -462,9 +462,22 @@ class TypingAdminController extends Controller
         ]);
 
         try {
-            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\UsersImport, $request->file('file'));
-            return redirect()->route('typing.admin.students.index')->with('success', 'นำเข้าข้อมูลนักเรียนเรียบร้อยแล้ว');
+            $import = new \App\Imports\UsersImport;
+            \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('file'));
+            
+            $message = "นำเข้าข้อมูลสำเร็จ: {$import->imported} รายการ";
+            if ($import->skipped > 0) {
+                $message .= " (ข้าม {$import->skipped} รายการ)";
+            }
+            
+            // Log errors for debugging
+            if (!empty($import->errors)) {
+                \Illuminate\Support\Facades\Log::warning('Import warnings:', $import->errors);
+            }
+            
+            return redirect()->route('typing.admin.students.index')->with('success', $message);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Import error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล: ' . $e->getMessage());
         }
     }
