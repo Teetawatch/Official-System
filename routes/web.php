@@ -45,6 +45,11 @@ Route::prefix('typing')->name('typing.')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('login');
         Route::post('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
+        
+        // Student Registration Routes
+        Route::get('/register', [App\Http\Controllers\StudentRegistrationController::class, 'showForm'])->name('student-register');
+        Route::post('/register', [App\Http\Controllers\StudentRegistrationController::class, 'register'])->name('student-register.submit');
+        Route::get('/register/students', [App\Http\Controllers\StudentRegistrationController::class, 'getStudentsByClass'])->name('student-register.students');
     });
     
     Route::post('/logout', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');

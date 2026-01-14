@@ -48,17 +48,17 @@
                 <form action="{{ route('typing.login') }}" method="POST" class="space-y-5">
                     @csrf
                     
-                    <!-- Email Input -->
+                    <!-- Email/Username Input -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class="fas fa-envelope text-gray-400 mr-1"></i>
-                            อีเมล
+                            <i class="fas fa-user text-gray-400 mr-1"></i>
+                            อีเมล หรือ Username
                         </label>
                         <input 
-                            type="email" 
+                            type="text" 
                             id="email"
                             name="email"
-                            placeholder="กรอกอีเมลของคุณ"
+                            placeholder="กรอกอีเมลหรือ Username"
                             class="input @error('email') border-red-500 @enderror"
                             value="{{ old('email') }}"
                             required
@@ -115,6 +115,15 @@
                     </button>
                 </form>
                 
+                <!-- Register Link -->
+                <div class="mt-6 pt-6 border-t border-gray-100 text-center">
+                    <p class="text-gray-600 text-sm">
+                        ยังไม่ได้ลงทะเบียน?
+                        <a href="{{ route('typing.student-register') }}" class="text-primary-600 hover:text-primary-700 font-semibold">
+                            สมัครสมาชิก
+                        </a>
+                    </p>
+                </div>
                 
             </div>
             

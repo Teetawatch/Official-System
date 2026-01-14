@@ -25,6 +25,8 @@ class User extends Authenticatable
         'student_id',
         'class_name',
         'avatar',
+        'username',
+        'is_registered',
     ];
 
     public function typingSubmissions()

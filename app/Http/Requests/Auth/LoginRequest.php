@@ -27,7 +27,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'], // Can be email or username
             'password' => ['required', 'string'],
         ];
     }
@@ -41,11 +41,37 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $credentials = $this->only('password');
+        $loginField = $this->input('email');
+        
+        // Try to authenticate with email first
+        $authenticated = Auth::attempt(
+            array_merge($credentials, ['email' => $loginField]),
+            $this->boolean('remember')
+        );
+        
+        // If failed, try with username
+        if (!$authenticated) {
+            $authenticated = Auth::attempt(
+                array_merge($credentials, ['username' => $loginField]),
+                $this->boolean('remember')
+            );
+        }
+
+        if (!$authenticated) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+        
+        // Check if user has registered (only for students)
+        $user = Auth::user();
+        if ($user->role === 'student' && !$user->is_registered) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'กรุณาลงทะเบียนก่อนเข้าใช้งาน',
             ]);
         }
 

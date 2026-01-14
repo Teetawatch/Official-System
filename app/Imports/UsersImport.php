@@ -27,7 +27,8 @@ class UsersImport implements ToModel, WithHeadingRow
             'student_id' => $row['student_id'],
             'class_name' => $row['class_name'] ?? null,
             'role' => 'student',
-            'password' => Hash::make($row['student_id']), // Default password is student ID
+            'password' => null, // Password will be set by student during registration
+            'is_registered' => false,
         ]);
     }
 }
