@@ -465,14 +465,14 @@ class TypingAdminController extends Controller
             $import = new \App\Imports\UsersImport;
             \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('file'));
             
-            $message = "นำเข้าข้อมูลสำเร็จ: {$import->imported} รายการ";
-            if ($import->skipped > 0) {
-                $message .= " (ข้าม {$import->skipped} รายการ)";
-            }
-            
-            // Log errors for debugging
-            if (!empty($import->errors)) {
-                \Illuminate\Support\Facades\Log::warning('Import warnings:', $import->errors);
+            // Check if new version with counters
+            if (property_exists($import, 'imported')) {
+                $message = "นำเข้าข้อมูลสำเร็จ: {$import->imported} รายการ";
+                if ($import->skipped > 0) {
+                    $message .= " (ข้าม {$import->skipped} รายการ)";
+                }
+            } else {
+                $message = 'นำเข้าข้อมูลนักเรียนเรียบร้อยแล้ว';
             }
             
             return redirect()->route('typing.admin.students.index')->with('success', $message);
