@@ -88,6 +88,21 @@
                 <span>บอร์ดผู้นำ</span>
             </a>
             
+            <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">ร้านค้า</p>
+            
+            <a href="{{ url('/typing/shop') }}" class="sidebar-link {{ request()->is('typing/shop') ? 'active' : '' }}">
+                <i class="fas fa-store w-5 text-center"></i>
+                <span>ร้านค้าแลกรางวัล</span>
+                <span class="ml-auto text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                    {{ number_format(auth()->user()->points ?? 0) }}
+                </span>
+            </a>
+            
+            <a href="{{ url('/typing/shop/my-rewards') }}" class="sidebar-link {{ request()->is('typing/shop/my-rewards') ? 'active' : '' }}">
+                <i class="fas fa-box-open w-5 text-center"></i>
+                <span>รางวัลของฉัน</span>
+            </a>
+            
             <p class="px-4 py-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">บัญชีผู้ใช้</p>
             
             <a href="{{ url('/typing/profile') }}" class="sidebar-link {{ request()->is('typing/profile') ? 'active' : '' }}">

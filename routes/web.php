@@ -122,6 +122,15 @@ Route::prefix('typing')->name('typing.')->group(function () {
         Route::put('/profile/password', [App\Http\Controllers\TypingProfileController::class, 'updatePassword'])->name('profile.password');
         Route::post('/profile/avatar', [App\Http\Controllers\TypingProfileController::class, 'updateAvatar'])->name('profile.avatar');
         
+        // Reward Shop Routes
+        Route::prefix('shop')->name('shop.')->group(function () {
+            Route::get('/', [App\Http\Controllers\RewardShopController::class, 'index'])->name('index');
+            Route::post('/purchase/{id}', [App\Http\Controllers\RewardShopController::class, 'purchase'])->name('purchase');
+            Route::get('/my-rewards', [App\Http\Controllers\RewardShopController::class, 'myRewards'])->name('my-rewards');
+            Route::post('/equip/{id}', [App\Http\Controllers\RewardShopController::class, 'equip'])->name('equip');
+            Route::post('/unequip/{id}', [App\Http\Controllers\RewardShopController::class, 'unequip'])->name('unequip');
+        });
+        
         // Redirect base /typing to appropriate dashboard based on role
         Route::get('/', function () {
             if (auth()->user()->role === 'admin') {

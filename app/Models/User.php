@@ -27,11 +27,67 @@ class User extends Authenticatable
         'avatar',
         'username',
         'is_registered',
+        'points',
+        'coins',
+        'equipped_frame',
+        'equipped_theme',
+        'equipped_title',
     ];
 
     public function typingSubmissions()
     {
         return $this->hasMany(TypingSubmission::class);
+    }
+
+    /**
+     * Get rewards owned by user
+     */
+    public function rewards()
+    {
+        return $this->belongsToMany(RewardItem::class, 'user_rewards')
+            ->withPivot('is_equipped', 'purchased_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get user rewards (pivot records)
+     */
+    public function userRewards()
+    {
+        return $this->hasMany(UserReward::class);
+    }
+
+    /**
+     * Get equipped frame
+     */
+    public function getEquippedFrameItemAttribute()
+    {
+        if ($this->equipped_frame) {
+            return RewardItem::find($this->equipped_frame);
+        }
+        return null;
+    }
+
+    /**
+     * Get equipped theme
+     */
+    public function getEquippedThemeItemAttribute()
+    {
+        if ($this->equipped_theme) {
+            return RewardItem::find($this->equipped_theme);
+        }
+        return null;
+    }
+
+    /**
+     * Get equipped title
+     */
+    public function getEquippedTitleItemAttribute()
+    {
+        if ($this->equipped_title) {
+            return RewardItem::find($this->equipped_title);
+        }
+        return null;
     }
 
     /**

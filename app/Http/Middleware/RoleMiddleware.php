@@ -22,9 +22,9 @@ class RoleMiddleware
         if (! in_array($request->user()->role, $roles)) {
             // Redirect based on role if they are trying to access wrong area
             if ($request->user()->role === 'admin') {
-                return redirect()->route('admin.dashboard');
+                return redirect()->route('typing.admin.dashboard');
             } else {
-                return redirect()->route('student.dashboard');
+                return redirect()->route('typing.student.dashboard');
             }
         }
 
