@@ -302,7 +302,12 @@
 
                     calculateStats() {
                         if (this.timer > 0) {
-                            const words = this.correctKeystrokes / 5;
+                            // Standard WPM Formula:
+                            // 1. Count all typed characters (currentIndex includes letters, numbers, spaces, punctuation)
+                            // 2. Divide by 5 (1 standard word = 5 characters)
+                            // 3. Divide by time in minutes
+                            const totalCharactersTyped = this.currentIndex;
+                            const words = totalCharactersTyped / 5;
                             const minutes = this.timer / 60;
                             this.wpm = Math.round(words / minutes);
                         }

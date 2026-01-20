@@ -11,6 +11,46 @@ use Illuminate\Support\Facades\Auth;
 class TypingController extends Controller
 {
     /**
+     * Get effective deadline for an assignment.
+     * If due_date is set at midnight (00:00:00), treat it as end of day (23:59:59).
+     * This ensures that setting a due date of "January 20" means the entire day is valid.
+     *
+     * @param TypingAssignment $assignment
+     * @return \Carbon\Carbon|null
+     */
+    private function getEffectiveDeadline($assignment)
+    {
+        if (!$assignment->due_date) {
+            return null;
+        }
+        
+        $dueDate = $assignment->due_date;
+        
+        // If time is exactly 00:00:00, treat it as end of day
+        if ($dueDate->format('H:i:s') === '00:00:00') {
+            return $dueDate->copy()->endOfDay();
+        }
+        
+        return $dueDate;
+    }
+
+    /**
+     * Check if an assignment deadline has passed.
+     *
+     * @param TypingAssignment $assignment
+     * @return bool
+     */
+    private function isDeadlinePassed($assignment): bool
+    {
+        $effectiveDeadline = $this->getEffectiveDeadline($assignment);
+        
+        if (!$effectiveDeadline) {
+            return false;
+        }
+        
+        return now()->greaterThan($effectiveDeadline);
+    }
+    /**
      * Show the typing practice interface for a specific assignment.
      */
     public function practice($id)
@@ -244,7 +284,7 @@ class TypingController extends Controller
         }
 
         $assignment = TypingAssignment::findOrFail($id);
-        if ($assignment->due_date && now()->greaterThan($assignment->due_date)) {
+        if ($this->isDeadlinePassed($assignment)) {
             return response()->json([
                 'success' => false,
                 'message' => 'หมดเวลาส่งงานแล้ว (Deadline Exceeded)'
@@ -358,7 +398,7 @@ class TypingController extends Controller
             'file' => 'required|file|mimes:docx,pdf|max:10240', // Max 10MB
         ]);
 
-        if ($assignment->due_date && now()->greaterThan($assignment->due_date)) {
+        if ($this->isDeadlinePassed($assignment)) {
             return back()->withErrors(['file' => 'หมดเวลาส่งงานแล้ว (Deadline Exceeded)']);
         }
         

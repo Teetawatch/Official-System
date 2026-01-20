@@ -65,49 +65,108 @@ class DocxGradingService
         $submittedNormalized = $this->normalizeText($submittedText);
         $masterNormalized = $this->normalizeText($masterText);
 
-        // Split into words
-        $submittedWords = preg_split('/\s+/u', $submittedNormalized, -1, PREG_SPLIT_NO_EMPTY);
-        $masterWords = preg_split('/\s+/u', $masterNormalized, -1, PREG_SPLIT_NO_EMPTY);
+        // CHARACTER-LEVEL COMPARISON for precise accuracy
+        // Convert strings to character arrays (UTF-8 safe)
+        $submittedChars = preg_split('//u', $submittedNormalized, -1, PREG_SPLIT_NO_EMPTY);
+        $masterChars = preg_split('//u', $masterNormalized, -1, PREG_SPLIT_NO_EMPTY);
 
-        $totalMasterWords = count($masterWords);
-        $totalSubmittedWords = count($submittedWords);
+        $totalMasterChars = count($masterChars);
+        $totalSubmittedChars = count($submittedChars);
 
-        if ($totalMasterWords === 0) {
+        if ($totalMasterChars === 0) {
             return [
                 'accuracy' => 0,
+                'correct_chars' => 0,
+                'total_chars' => 0,
+                'wrong_chars' => 0,
+                'missing_chars' => 0,
+                'extra_chars' => $totalSubmittedChars,
                 'correct_words' => 0,
                 'total_words' => 0,
                 'wrong_words' => 0,
                 'missing_words' => 0,
-                'extra_words' => $totalSubmittedWords,
+                'extra_words' => 0,
                 'details' => [],
             ];
         }
 
-        // Use Longest Common Subsequence (LCS) for accurate comparison
-        // This handles insertions, deletions, and substitutions properly
-        $lcs = $this->computeLCS($masterWords, $submittedWords);
-        $correctWords = count($lcs);
+        // Use LCS for character-level comparison
+        $lcsLength = $this->computeCharacterLCSLength($masterChars, $submittedChars);
+        $correctChars = $lcsLength;
         
-        // Build detailed comparison using LCS alignment
-        $details = $this->buildComparisonDetails($masterWords, $submittedWords, $lcs);
-        
-        // Calculate wrong words (words in master that weren't matched)
-        $wrongWords = $totalMasterWords - $correctWords;
-        $missingWords = max(0, $totalMasterWords - $totalSubmittedWords);
-        $extraWords = max(0, $totalSubmittedWords - $totalMasterWords);
+        // Calculate character-level metrics
+        $wrongChars = $totalMasterChars - $correctChars;
+        $missingChars = max(0, $totalMasterChars - $totalSubmittedChars);
+        $extraChars = max(0, $totalSubmittedChars - $totalMasterChars);
 
-        $accuracy = ($correctWords / $totalMasterWords) * 100;
+        // Character-based accuracy
+        $accuracy = ($correctChars / $totalMasterChars) * 100;
+
+        // Also compute word-level stats for reference
+        $submittedWords = preg_split('/\s+/u', $submittedNormalized, -1, PREG_SPLIT_NO_EMPTY);
+        $masterWords = preg_split('/\s+/u', $masterNormalized, -1, PREG_SPLIT_NO_EMPTY);
+        $totalMasterWords = count($masterWords);
+        $totalSubmittedWords = count($submittedWords);
+        
+        // Count exact word matches
+        $correctWords = 0;
+        $minWords = min($totalMasterWords, $totalSubmittedWords);
+        for ($i = 0; $i < $minWords; $i++) {
+            if ($masterWords[$i] === $submittedWords[$i]) {
+                $correctWords++;
+            }
+        }
 
         return [
             'accuracy' => round($accuracy, 2),
+            'correct_chars' => $correctChars,
+            'total_chars' => $totalMasterChars,
+            'wrong_chars' => $wrongChars,
+            'missing_chars' => $missingChars,
+            'extra_chars' => $extraChars,
             'correct_words' => $correctWords,
             'total_words' => $totalMasterWords,
-            'wrong_words' => $wrongWords,
-            'missing_words' => $missingWords,
-            'extra_words' => $extraWords,
-            'details' => $details,
+            'wrong_words' => $totalMasterWords - $correctWords,
+            'missing_words' => max(0, $totalMasterWords - $totalSubmittedWords),
+            'extra_words' => max(0, $totalSubmittedWords - $totalMasterWords),
+            'details' => [],
         ];
+    }
+
+    /**
+     * Compute LCS length for character arrays using optimized space algorithm.
+     * Returns only the length (not the actual sequence) for memory efficiency.
+     *
+     * @param array $master Master character array
+     * @param array $submitted Submitted character array
+     * @return int Length of LCS
+     */
+    private function computeCharacterLCSLength(array $master, array $submitted): int
+    {
+        $m = count($master);
+        $n = count($submitted);
+        
+        // Use space-optimized DP (only keep 2 rows)
+        $prev = array_fill(0, $n + 1, 0);
+        $curr = array_fill(0, $n + 1, 0);
+        
+        for ($i = 1; $i <= $m; $i++) {
+            for ($j = 1; $j <= $n; $j++) {
+                if ($master[$i - 1] === $submitted[$j - 1]) {
+                    $curr[$j] = $prev[$j - 1] + 1;
+                } else {
+                    $curr[$j] = max($prev[$j], $curr[$j - 1]);
+                }
+            }
+            // Swap rows
+            $temp = $prev;
+            $prev = $curr;
+            $curr = $temp;
+            // Reset curr for next iteration
+            $curr = array_fill(0, $n + 1, 0);
+        }
+        
+        return $prev[$n];
     }
 
     /**

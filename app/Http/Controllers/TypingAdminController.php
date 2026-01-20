@@ -529,10 +529,12 @@ class TypingAdminController extends Controller
                 $masterFilePath // Pass master file for formatting comparison
             );
 
-            // Build feedback message
+            // Build feedback message with character-level info
             $feedback = sprintf(
-                "🤖 ตรวจอัตโนมัติ\nความแม่นยำตัวอักษร: %.1f%%\nคำถูก: %d/%d คำ",
+                " ตรวจแล้ว\nความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
                 $result['accuracy'],
+                $result['correct_chars'] ?? 0,
+                $result['total_chars'] ?? 0,
                 $result['correct_words'],
                 $result['total_words']
             );
@@ -633,10 +635,12 @@ class TypingAdminController extends Controller
                     $masterFilePath
                 );
 
-                // Build feedback
+                // Build feedback with character-level info
                 $feedback = sprintf(
-                    "🤖 ตรวจอัตโนมัติ\nความแม่นยำตัวอักษร: %.1f%%\nคำถูก: %d/%d คำ",
+                    "🤖 ตรวจอัตโนมัติ\nความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
                     $result['accuracy'],
+                    $result['correct_chars'] ?? 0,
+                    $result['total_chars'] ?? 0,
                     $result['correct_words'],
                     $result['total_words']
                 );
