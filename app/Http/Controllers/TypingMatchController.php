@@ -15,9 +15,10 @@ class TypingMatchController extends Controller
         return view('typing.matches.index');
     }
 
-    public function findMatch()
+    public function findMatch(Request $request)
     {
         $user = Auth::user();
+        $language = $request->input('language', 'en'); // Default to English
 
         // Check if user is already in an active match
         $activeMatch = TypingMatch::where(function($q) use ($user) {
@@ -34,11 +35,12 @@ class TypingMatchController extends Controller
             ]);
         }
 
-        // Look for a pending match to join
+        // Look for a pending match to join (same language)
         $pendingMatch = TypingMatch::where('status', 'pending')
-            ->where('player1_id', '!=', $user->id) // Use != to strictly avoid self-matching
+            ->where('player1_id', '!=', $user->id)
+            ->where('language', $language)
             ->whereNull('player2_id')
-            ->oldest() // Join the oldest waiting match
+            ->oldest()
             ->first();
 
         if ($pendingMatch) {
@@ -54,17 +56,30 @@ class TypingMatchController extends Controller
             ]);
         }
 
-        // Create a new match if none found
+        // Text samples for each language
         $texts = [
-            "The quick brown fox jumps over the lazy dog. Programming is the art of telling another human what one wants the computer to do.",
-            "Success is not final, failure is not fatal: it is the courage to continue that counts. Believe you can and you're halfway there.",
-            "In the end, it's not the years in your life that count. It's the life in your years. Life is what happens when you're busy making other plans.",
-            "Technology is best when it brings people together. It has become appallingly obvious that our technology has exceeded our humanity.",
+            'en' => [
+                "The quick brown fox jumps over the lazy dog. Programming is the art of telling another human what one wants the computer to do.",
+                "Success is not final, failure is not fatal: it is the courage to continue that counts. Believe you can and you're halfway there.",
+                "In the end, it's not the years in your life that count. It's the life in your years. Life is what happens when you're busy making other plans.",
+                "Technology is best when it brings people together. It has become appallingly obvious that our technology has exceeded our humanity.",
+            ],
+            'th' => [
+                "การศึกษาคือรากฐานสำคัญของการพัฒนาประเทศ เราต้องเรียนรู้และพัฒนาตนเองอยู่เสมอ เพื่อสร้างอนาคตที่ดีกว่า",
+                "ความสำเร็จไม่ได้มาจากโชค แต่มาจากความพยายามและความมุ่งมั่น ถ้าคุณเชื่อว่าทำได้ คุณก็จะทำได้จริง",
+                "ภาษาเป็นเครื่องมือสำคัญในการสื่อสาร การพิมพ์เร็วและแม่นยำจะช่วยให้เราทำงานได้อย่างมีประสิทธิภาพมากขึ้น",
+                "ประเทศไทยมีวัฒนธรรมอันงดงาม เราควรภูมิใจในความเป็นไทย และช่วยกันอนุรักษ์สิ่งดีงามเหล่านี้ไว้ให้ลูกหลาน",
+                "ความรู้ไม่มีวันหมด ยิ่งเรียนยิ่งรู้ว่ายังไม่รู้อะไรอีกมาก การเป็นผู้ใฝ่รู้จะทำให้เราเติบโตและก้าวหน้าในชีวิต",
+            ],
         ];
 
+        $selectedTexts = $texts[$language] ?? $texts['en'];
+
+        // Create a new match if none found
         $match = TypingMatch::create([
             'player1_id' => $user->id,
-            'text_content' => $texts[array_rand($texts)],
+            'text_content' => $selectedTexts[array_rand($selectedTexts)],
+            'language' => $language,
             'status' => 'pending',
         ]);
 

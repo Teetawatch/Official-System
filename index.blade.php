@@ -21,7 +21,28 @@
                 </div>
                 
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">พร้อมหรือยัง?</h3>
-                <p class="text-gray-600 mb-8">ค้นหาคู่ต่อสู้และเริ่มการแข่งขันทันที</p>
+                <p class="text-gray-600 mb-6">เลือกภาษาและค้นหาคู่ต่อสู้</p>
+
+                <!-- Language Selection -->
+                <div class="mb-6" id="language-selector">
+                    <p class="text-sm text-gray-500 mb-3">เลือกภาษาที่ต้องการแข่ง:</p>
+                    <div class="flex gap-3 justify-center">
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="language" value="th" class="sr-only peer" checked>
+                            <div class="px-6 py-3 rounded-xl border-2 border-gray-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 transition-all duration-200 hover:border-indigo-300">
+                                <span class="text-2xl mb-1 block">🇹🇭</span>
+                                <span class="text-sm font-medium text-gray-700 peer-checked:text-indigo-700">ภาษาไทย</span>
+                            </div>
+                        </label>
+                        <label class="relative cursor-pointer">
+                            <input type="radio" name="language" value="en" class="sr-only peer">
+                            <div class="px-6 py-3 rounded-xl border-2 border-gray-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 transition-all duration-200 hover:border-indigo-300">
+                                <span class="text-2xl mb-1 block">🇺🇸</span>
+                                <span class="text-sm font-medium text-gray-700 peer-checked:text-indigo-700">English</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
 
                 <div id="match-status" class="hidden mb-6">
                     <div class="flex items-center justify-center space-x-3 text-indigo-600">
@@ -78,14 +99,19 @@
     const matchStatus = document.getElementById('match-status');
     const countdownDiv = document.getElementById('countdown');
     const countdownText = document.getElementById('countdown-text');
+    const languageSelector = document.getElementById('language-selector');
     let matchId = null;
     let checkInterval = null;
 
     findMatchBtn.addEventListener('click', async () => {
+        // Get selected language
+        const selectedLanguage = document.querySelector('input[name="language"]:checked').value;
+        
         findMatchBtn.disabled = true;
         findMatchBtn.classList.add('opacity-50', 'cursor-not-allowed');
         matchStatus.classList.remove('hidden');
         findMatchBtn.classList.add('hidden');
+        languageSelector.classList.add('hidden');
 
         try {
             const response = await fetch('{{ route('typing.student.matches.find') }}', {
@@ -93,7 +119,10 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
+                },
+                body: JSON.stringify({
+                    language: selectedLanguage
+                })
             });
             
             const data = await response.json();
@@ -117,7 +146,7 @@
     function waitForOpponent() {
         checkInterval = setInterval(async () => {
             try {
-                const response = await fetch(`/typing/student/matches/${matchId}/status`);
+                const response = await fetch(`{{ url('/typing/student/matches') }}/${matchId}/status`);
                 const data = await response.json();
 
                 if (data.player2 !== null) {
@@ -140,7 +169,7 @@
             countdownText.textContent = count;
             if (count <= 0) {
                 clearInterval(countInterval);
-                window.location.href = `/typing/student/matches/${matchId}`;
+                window.location.href = `{{ url('/typing/student/matches') }}/${matchId}`;
             }
         }, 1000);
     }
@@ -149,6 +178,7 @@
         findMatchBtn.disabled = false;
         findMatchBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'hidden');
         matchStatus.classList.add('hidden');
+        languageSelector.classList.remove('hidden');
     }
 </script>
 </x-typing-app>

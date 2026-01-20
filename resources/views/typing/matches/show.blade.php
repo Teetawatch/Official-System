@@ -184,7 +184,13 @@
                    this.inputText = this.targetText.substring(0, this.currIndex); // Restore input (cheat a bit)
                 }
 
-                this.$refs.input.focus();
+                // Only focus if game already started
+                if (this.started) {
+                    this.$refs.input.focus();
+                }
+                
+                // Poll immediately to get latest status, then poll every second
+                this.pollStatus();
                 this.pollInterval = setInterval(() => this.pollStatus(), 1000);
 
                 if (this.started && !this.startTime) {
@@ -277,7 +283,7 @@
 
             async pollStatus() {
                 try {
-                    const response = await fetch(`/typing/student/matches/${this.matchId}/status`);
+                    const response = await fetch(`{{ url('/typing/student/matches') }}/${this.matchId}/status`);
                     const data = await response.json(); // returns { player1: {...}, player2: {...}, status: ... }
 
                     // Sync Opponent
@@ -321,7 +327,11 @@
                     if (data.status === 'ongoing' && !this.started) {
                         this.started = true;
                         this.startTime = Date.now();
-                        this.$refs.input.focus();
+                        // Use $nextTick to ensure DOM updates before focusing
+                        this.$nextTick(() => {
+                            this.$refs.input.disabled = false;
+                            this.$refs.input.focus();
+                        });
                     }
 
                     // Check game finish
@@ -340,7 +350,7 @@
             },
 
             async sendProgress() {
-                await fetch(`/typing/student/matches/${this.matchId}/progress`, {
+                await fetch(`{{ url('/typing/student/matches') }}/${this.matchId}/progress`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -358,7 +368,7 @@
                 this.finished = true;
                 this.winnerId = this.currentUserId; // Optimistic update
                 
-                await fetch(`/typing/student/matches/${this.matchId}/finish`, {
+                await fetch(`{{ url('/typing/student/matches') }}/${this.matchId}/finish`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

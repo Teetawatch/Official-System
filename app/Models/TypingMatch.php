@@ -14,6 +14,7 @@ class TypingMatch extends Model
         'player2_id',
         'winner_id',
         'text_content',
+        'language',
         'status',
         'player1_progress',
         'player2_progress',
