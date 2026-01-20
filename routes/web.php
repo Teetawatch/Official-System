@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -45,18 +45,18 @@ Route::prefix('typing')->name('typing.')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('login');
         Route::post('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
-        
+
         // Student Registration Routes
         Route::get('/register', [App\Http\Controllers\StudentRegistrationController::class, 'showForm'])->name('student-register');
         Route::post('/register', [App\Http\Controllers\StudentRegistrationController::class, 'register'])->name('student-register.submit');
         Route::get('/register/students', [App\Http\Controllers\StudentRegistrationController::class, 'getStudentsByClass'])->name('student-register.students');
     });
-    
+
     Route::post('/logout', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
-    
+
     // Protected Routes
     Route::middleware('auth')->group(function () {
-        
+
         // Admin Routes
         Route::prefix('admin')->name('admin.')
             ->middleware('role:admin')
@@ -81,7 +81,7 @@ Route::prefix('typing')->name('typing.')->group(function () {
                 Route::post('/submissions/{id}/auto-grade', [App\Http\Controllers\TypingAdminController::class, 'autoGradeSubmission'])->name('submissions.autograde');
                 Route::post('/submissions/auto-grade-all/{assignmentId}', [App\Http\Controllers\TypingAdminController::class, 'autoGradeAllSubmissions'])->name('submissions.autograde.all');
             });
-        
+
         // Student Routes
         Route::prefix('student')->name('student.')
             ->middleware('role:student')
@@ -101,6 +101,7 @@ Route::prefix('typing')->name('typing.')->group(function () {
                 Route::post('/upload/{id}', [App\Http\Controllers\TypingController::class, 'storeUpload'])->name('upload.submit');
 
                 // 1v1 Match Routes
+                Route::get('/matches/ranking', [App\Http\Controllers\TypingMatchController::class, 'ranking'])->name('matches.ranking');
                 Route::get('/matches', [App\Http\Controllers\TypingMatchController::class, 'index'])->name('matches.index');
                 Route::post('/matches/find', [App\Http\Controllers\TypingMatchController::class, 'findMatch'])->name('matches.find');
                 Route::get('/matches/{id}', [App\Http\Controllers\TypingMatchController::class, 'show'])->name('matches.show');
@@ -108,20 +109,20 @@ Route::prefix('typing')->name('typing.')->group(function () {
                 Route::post('/matches/{id}/progress', [App\Http\Controllers\TypingMatchController::class, 'updateProgress'])->name('matches.progress');
                 Route::post('/matches/{id}/finish', [App\Http\Controllers\TypingMatchController::class, 'finish'])->name('matches.finish');
             });
-        
+
         // Shared Routes
         Route::get('/leaderboard', [App\Http\Controllers\TypingController::class, 'leaderboard'])->name('leaderboard');
-        
+
         // Notification Routes
         Route::get('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
         Route::get('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
-        
+
         // Profile Routes
         Route::get('/profile', [App\Http\Controllers\TypingProfileController::class, 'show'])->name('profile');
         Route::put('/profile', [App\Http\Controllers\TypingProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password', [App\Http\Controllers\TypingProfileController::class, 'updatePassword'])->name('profile.password');
         Route::post('/profile/avatar', [App\Http\Controllers\TypingProfileController::class, 'updateAvatar'])->name('profile.avatar');
-        
+
         // Reward Shop Routes
         Route::prefix('shop')->name('shop.')->group(function () {
             Route::get('/', [App\Http\Controllers\RewardShopController::class, 'index'])->name('index');
@@ -130,7 +131,15 @@ Route::prefix('typing')->name('typing.')->group(function () {
             Route::post('/equip/{id}', [App\Http\Controllers\RewardShopController::class, 'equip'])->name('equip');
             Route::post('/unequip/{id}', [App\Http\Controllers\RewardShopController::class, 'unequip'])->name('unequip');
         });
-        
+
+        // Tournament Routes
+        Route::prefix('tournaments')->name('tournaments.')->group(function () {
+            Route::get('/', [App\Http\Controllers\TournamentController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\TournamentController::class, 'create'])->name('create');
+            Route::post('/{id}/join', [App\Http\Controllers\TournamentController::class, 'join'])->name('join');
+            Route::get('/{id}', [App\Http\Controllers\TournamentController::class, 'show'])->name('show');
+        });
+
         // Redirect base /typing to appropriate dashboard based on role
         Route::get('/', function () {
             if (auth()->user()->role === 'admin') {

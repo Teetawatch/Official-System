@@ -24,6 +24,9 @@ class TypingMatch extends Model
         'player2_accuracy',
         'started_at',
         'completed_at',
+        'tournament_id', // Added this line
+        'round',         // Added this line
+        'bracket_index', // Added this line
     ];
 
     protected $casts = [
@@ -44,5 +47,10 @@ class TypingMatch extends Model
     public function winner()
     {
         return $this->belongsTo(User::class, 'winner_id');
+    }
+
+    public function tournament() // Added this method
+    {
+        return $this->belongsTo(Tournament::class);
     }
 }

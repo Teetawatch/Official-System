@@ -21,12 +21,12 @@ class TypingMatchController extends Controller
         $language = $request->input('language', 'en'); // Default to English
 
         // Check if user is already in an active match
-        $activeMatch = TypingMatch::where(function($q) use ($user) {
+        $activeMatch = TypingMatch::where(function ($q) use ($user) {
             $q->where('player1_id', $user->id)
-              ->orWhere('player2_id', $user->id);
+                ->orWhere('player2_id', $user->id);
         })
-        ->whereIn('status', ['pending', 'ongoing'])
-        ->first();
+            ->whereIn('status', ['pending', 'ongoing'])
+            ->first();
 
         if ($activeMatch) {
             return response()->json([
@@ -104,12 +104,12 @@ class TypingMatchController extends Controller
     public function status($id)
     {
         $match = TypingMatch::with(['player1', 'player2', 'winner'])->findOrFail($id);
-        
+
         return response()->json([
             'status' => $match->status,
             'player1' => [
                 'id' => $match->player1->id,
-                'name' => $match->player1->name, 
+                'name' => $match->player1->name,
                 'progress' => $match->player1_progress,
                 'wpm' => $match->player1_wpm,
                 'avatar' => $match->player1->avatar_url,
@@ -130,9 +130,9 @@ class TypingMatchController extends Controller
     {
         $match = TypingMatch::findOrFail($id);
         $user = Auth::user();
-        
+
         $isPlayer1 = $match->player1_id === $user->id;
-        
+
         $data = [
             $isPlayer1 ? 'player1_progress' : 'player2_progress' => $request->progress,
             $isPlayer1 ? 'player1_wpm' : 'player2_wpm' => $request->wpm,
@@ -154,12 +154,14 @@ class TypingMatchController extends Controller
     {
         $match = TypingMatch::findOrFail($id);
         $user = Auth::user();
-        
+        $isNewRecord = false;
+        $finalWpm = $request->input('wpm', 0);
+
         // Use a transaction to prevent race conditions on winning
-        DB::transaction(function() use ($match, $user) {
+        DB::transaction(function () use ($match, $user, &$isNewRecord, $finalWpm) {
             // Reload to get latest state
             $match = TypingMatch::lockForUpdate()->find($match->id);
-            
+
             if (!$match->winner_id) {
                 $match->winner_id = $user->id;
                 $match->status = 'completed';
@@ -168,15 +170,132 @@ class TypingMatchController extends Controller
 
                 // Award points
                 $user->increment('points', 50); // Winner gets 50 points
-                
+                $user->increment('match_wins', 1);
+
+                // Check if this is a personal best WPM
+                if ($finalWpm > ($user->best_match_wpm ?? 0)) {
+                    $user->best_match_wpm = $finalWpm;
+                    $user->save();
+                    $isNewRecord = true;
+                }
+
                 // Loser gets 10 points for participation
                 $loserId = ($match->player1_id === $user->id) ? $match->player2_id : $match->player1_id;
                 if ($loserId) {
-                    User::find($loserId)->increment('points', 10);
+                    $loser = User::find($loserId);
+                    $loser->increment('points', 10);
+                    $loser->increment('match_losses', 1);
+                }
+
+                // Tournament Advancement Logic
+                if ($match->tournament_id && $match->round) {
+                    $nextRound = $match->round + 1;
+                    $nextBracketIndex = floor($match->bracket_index / 2);
+
+                    $nextMatch = TypingMatch::where('tournament_id', $match->tournament_id)
+                        ->where('round', $nextRound)
+                        ->where('bracket_index', $nextBracketIndex)
+                        ->first();
+
+                    if ($nextMatch) {
+                        // Determine if winner goes to slot 1 or 2
+                        // Even index -> Player 1 slot, Odd index -> Player 2 slot (relative to current round pair)
+                        // Example: Index 0 & 1 -> Next Match Index 0.
+                        // 0 is even -> P1. 1 is odd -> P2.
+                        $isPlayer1Slot = ($match->bracket_index % 2 === 0);
+
+                        $updateData = $isPlayer1Slot ? ['player1_id' => $user->id] : ['player2_id' => $user->id];
+                        $nextMatch->update($updateData);
+                    } else {
+                        // No next match? Maybe it was the final?
+                        // If round was Final (e.g. 4 for 16 players), then we notify update tournament
+                        // We can check if it was indeed the last round available in DB or hardcoded logic.
+                        // Let's assume if no next match found, and it's a tournament, we might be done.
+                        // Or simply check if this was the "Final" round.
+
+                        // Check if specific tournament has this as last round
+                        $maxRound = TypingMatch::where('tournament_id', $match->tournament_id)->max('round');
+                        if ($match->round == $maxRound) {
+                            $match->tournament->update(['champion_id' => $user->id, 'status' => 'completed']);
+                        }
+                    }
                 }
             }
         });
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'is_new_record' => $isNewRecord
+        ]);
+    }
+
+    /**
+     * Get 1v1 Match Rankings
+     */
+    public function ranking()
+    {
+        $user = Auth::user();
+
+        // Get top players by wins
+        $topPlayers = User::where('role', 'student')
+            ->where('match_wins', '>', 0)
+            ->orderByDesc('match_wins')
+            ->orderByDesc('best_match_wpm')
+            ->limit(100)
+            ->get()
+            ->map(function ($player, $index) {
+                return [
+                    'rank' => $index + 1,
+                    'id' => $player->id,
+                    'name' => $player->name,
+                    'avatar' => $player->avatar_url,
+                    'class_name' => $player->class_name,
+                    'wins' => $player->match_wins ?? 0,
+                    'losses' => $player->match_losses ?? 0,
+                    'best_wpm' => $player->best_match_wpm ?? 0,
+                    'win_rate' => ($player->match_wins + $player->match_losses) > 0
+                        ? round(($player->match_wins / ($player->match_wins + $player->match_losses)) * 100)
+                        : 0,
+                ];
+            });
+
+        // Get current user's stats
+        $myStats = [
+            'wins' => $user->match_wins ?? 0,
+            'losses' => $user->match_losses ?? 0,
+            'best_wpm' => $user->best_match_wpm ?? 0,
+            'rank' => $topPlayers->search(fn($p) => $p['id'] === $user->id) + 1 ?: null,
+        ];
+
+        // Get recent matches
+        $recentMatches = TypingMatch::with(['player1', 'player2', 'winner'])
+            ->where('status', 'completed')
+            ->where(function ($q) use ($user) {
+                $q->where('player1_id', $user->id)
+                    ->orWhere('player2_id', $user->id);
+            })
+            ->orderByDesc('completed_at')
+            ->limit(10)
+            ->get()
+            ->map(function ($match) use ($user) {
+                $isPlayer1 = $match->player1_id === $user->id;
+                $opponent = $isPlayer1 ? $match->player2 : $match->player1;
+                $myWpm = $isPlayer1 ? $match->player1_wpm : $match->player2_wpm;
+                $opponentWpm = $isPlayer1 ? $match->player2_wpm : $match->player1_wpm;
+
+                return [
+                    'id' => $match->id,
+                    'opponent' => $opponent ? [
+                        'name' => $opponent->name,
+                        'avatar' => $opponent->avatar_url,
+                    ] : null,
+                    'won' => $match->winner_id === $user->id,
+                    'my_wpm' => $myWpm ?? 0,
+                    'opponent_wpm' => $opponentWpm ?? 0,
+                    'date' => $match->completed_at?->diffForHumans(),
+                ];
+            });
+
+        return view('typing.matches.ranking', compact('topPlayers', 'myStats', 'recentMatches'));
     }
 }
