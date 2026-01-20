@@ -61,13 +61,13 @@ class DocxGradingService
      */
     public function compareTexts(string $submittedText, string $masterText): array
     {
-        // Normalize texts (remove extra whitespace, normalize line breaks)
+        // Normalize texts with enhanced normalization for Thai
         $submittedNormalized = $this->normalizeText($submittedText);
         $masterNormalized = $this->normalizeText($masterText);
 
         // Split into words
-        $submittedWords = preg_split('/\s+/', $submittedNormalized, -1, PREG_SPLIT_NO_EMPTY);
-        $masterWords = preg_split('/\s+/', $masterNormalized, -1, PREG_SPLIT_NO_EMPTY);
+        $submittedWords = preg_split('/\s+/u', $submittedNormalized, -1, PREG_SPLIT_NO_EMPTY);
+        $masterWords = preg_split('/\s+/u', $masterNormalized, -1, PREG_SPLIT_NO_EMPTY);
 
         $totalMasterWords = count($masterWords);
         $totalSubmittedWords = count($submittedWords);
@@ -84,59 +84,20 @@ class DocxGradingService
             ];
         }
 
-        // Use Longest Common Subsequence (LCS) for better comparison
-        $correctWords = 0;
-        $wrongWords = 0;
-        $details = [];
-
-        // Simple word-by-word comparison (position-based)
-        $maxLength = max($totalMasterWords, $totalSubmittedWords);
+        // Use Longest Common Subsequence (LCS) for accurate comparison
+        // This handles insertions, deletions, and substitutions properly
+        $lcs = $this->computeLCS($masterWords, $submittedWords);
+        $correctWords = count($lcs);
         
-        for ($i = 0; $i < $maxLength; $i++) {
-            $masterWord = $masterWords[$i] ?? null;
-            $submittedWord = $submittedWords[$i] ?? null;
-
-            if ($masterWord === null) {
-                // Extra word in submission
-                $details[] = [
-                    'position' => $i + 1,
-                    'expected' => null,
-                    'submitted' => $submittedWord,
-                    'status' => 'extra',
-                ];
-            } elseif ($submittedWord === null) {
-                // Missing word in submission
-                $details[] = [
-                    'position' => $i + 1,
-                    'expected' => $masterWord,
-                    'submitted' => null,
-                    'status' => 'missing',
-                ];
-                $wrongWords++;
-            } elseif ($masterWord === $submittedWord) {
-                // Correct
-                $correctWords++;
-                $details[] = [
-                    'position' => $i + 1,
-                    'expected' => $masterWord,
-                    'submitted' => $submittedWord,
-                    'status' => 'correct',
-                ];
-            } else {
-                // Wrong word
-                $wrongWords++;
-                $details[] = [
-                    'position' => $i + 1,
-                    'expected' => $masterWord,
-                    'submitted' => $submittedWord,
-                    'status' => 'wrong',
-                ];
-            }
-        }
-
-        $accuracy = ($correctWords / $totalMasterWords) * 100;
+        // Build detailed comparison using LCS alignment
+        $details = $this->buildComparisonDetails($masterWords, $submittedWords, $lcs);
+        
+        // Calculate wrong words (words in master that weren't matched)
+        $wrongWords = $totalMasterWords - $correctWords;
         $missingWords = max(0, $totalMasterWords - $totalSubmittedWords);
         $extraWords = max(0, $totalSubmittedWords - $totalMasterWords);
+
+        $accuracy = ($correctWords / $totalMasterWords) * 100;
 
         return [
             'accuracy' => round($accuracy, 2),
@@ -147,6 +108,197 @@ class DocxGradingService
             'extra_words' => $extraWords,
             'details' => $details,
         ];
+    }
+
+    /**
+     * Compute Longest Common Subsequence between two word arrays.
+     * Uses dynamic programming for efficiency.
+     *
+     * @param array $master Master word array
+     * @param array $submitted Submitted word array
+     * @return array The LCS as array of matched words with their positions
+     */
+    private function computeLCS(array $master, array $submitted): array
+    {
+        $m = count($master);
+        $n = count($submitted);
+        
+        // Build LCS length table
+        $dp = array_fill(0, $m + 1, array_fill(0, $n + 1, 0));
+        
+        for ($i = 1; $i <= $m; $i++) {
+            for ($j = 1; $j <= $n; $j++) {
+                if ($this->wordsMatch($master[$i - 1], $submitted[$j - 1])) {
+                    $dp[$i][$j] = $dp[$i - 1][$j - 1] + 1;
+                } else {
+                    $dp[$i][$j] = max($dp[$i - 1][$j], $dp[$i][$j - 1]);
+                }
+            }
+        }
+        
+        // Backtrack to find the actual LCS
+        $lcs = [];
+        $i = $m;
+        $j = $n;
+        
+        while ($i > 0 && $j > 0) {
+            if ($this->wordsMatch($master[$i - 1], $submitted[$j - 1])) {
+                array_unshift($lcs, [
+                    'word' => $master[$i - 1],
+                    'master_pos' => $i - 1,
+                    'submitted_pos' => $j - 1,
+                ]);
+                $i--;
+                $j--;
+            } elseif ($dp[$i - 1][$j] > $dp[$i][$j - 1]) {
+                $i--;
+            } else {
+                $j--;
+            }
+        }
+        
+        return $lcs;
+    }
+
+    /**
+     * Check if two words match with tolerance for minor differences.
+     *
+     * @param string $word1
+     * @param string $word2
+     * @return bool
+     */
+    private function wordsMatch(string $word1, string $word2): bool
+    {
+        // Exact match
+        if ($word1 === $word2) {
+            return true;
+        }
+        
+        // Normalize both words and compare
+        $normalized1 = $this->normalizeWord($word1);
+        $normalized2 = $this->normalizeWord($word2);
+        
+        if ($normalized1 === $normalized2) {
+            return true;
+        }
+        
+        // Check similarity for very close matches (handles minor typos)
+        // Only apply to words longer than 3 characters
+        if (mb_strlen($normalized1) > 3 && mb_strlen($normalized2) > 3) {
+            $similarity = 0;
+            similar_text($normalized1, $normalized2, $similarity);
+            // 95% similarity threshold for longer words
+            if ($similarity >= 95) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Normalize a single word for comparison.
+     *
+     * @param string $word
+     * @return string
+     */
+    private function normalizeWord(string $word): string
+    {
+        // Convert to lowercase for non-Thai characters
+        $word = mb_strtolower($word, 'UTF-8');
+        
+        // Remove zero-width characters and other invisible Unicode characters
+        $word = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $word);
+        
+        // Normalize Unicode (NFC normalization)
+        if (class_exists('Normalizer')) {
+            $word = \Normalizer::normalize($word, \Normalizer::NFC);
+        }
+        
+        // Remove leading/trailing punctuation for comparison
+        $word = preg_replace('/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/u', '', $word);
+        
+        return trim($word);
+    }
+
+    /**
+     * Build detailed comparison using LCS alignment.
+     *
+     * @param array $masterWords
+     * @param array $submittedWords
+     * @param array $lcs
+     * @return array
+     */
+    private function buildComparisonDetails(array $masterWords, array $submittedWords, array $lcs): array
+    {
+        $details = [];
+        $lcsIndex = 0;
+        $submittedIndex = 0;
+        
+        for ($masterIndex = 0; $masterIndex < count($masterWords); $masterIndex++) {
+            $masterWord = $masterWords[$masterIndex];
+            
+            // Check if this master word is in the LCS
+            if ($lcsIndex < count($lcs) && $lcs[$lcsIndex]['master_pos'] === $masterIndex) {
+                // Found in LCS - it's a correct match
+                $details[] = [
+                    'position' => $masterIndex + 1,
+                    'expected' => $masterWord,
+                    'submitted' => $submittedWords[$lcs[$lcsIndex]['submitted_pos']],
+                    'status' => 'correct',
+                ];
+                $submittedIndex = $lcs[$lcsIndex]['submitted_pos'] + 1;
+                $lcsIndex++;
+            } else {
+                // Not in LCS - check if it's wrong or missing
+                // Look ahead in submitted words for a potential match
+                $foundWrong = false;
+                if ($submittedIndex < count($submittedWords)) {
+                    // Check if there's a submitted word at this position that doesn't match
+                    $details[] = [
+                        'position' => $masterIndex + 1,
+                        'expected' => $masterWord,
+                        'submitted' => $submittedWords[$submittedIndex] ?? null,
+                        'status' => 'wrong',
+                    ];
+                    $submittedIndex++;
+                    $foundWrong = true;
+                }
+                
+                if (!$foundWrong) {
+                    $details[] = [
+                        'position' => $masterIndex + 1,
+                        'expected' => $masterWord,
+                        'submitted' => null,
+                        'status' => 'missing',
+                    ];
+                }
+            }
+        }
+        
+        // Add any extra words from submission
+        while ($submittedIndex < count($submittedWords)) {
+            // Check if this word is already accounted for in LCS
+            $isInLcs = false;
+            foreach ($lcs as $match) {
+                if ($match['submitted_pos'] === $submittedIndex) {
+                    $isInLcs = true;
+                    break;
+                }
+            }
+            
+            if (!$isInLcs) {
+                $details[] = [
+                    'position' => count($masterWords) + 1,
+                    'expected' => null,
+                    'submitted' => $submittedWords[$submittedIndex],
+                    'status' => 'extra',
+                ];
+            }
+            $submittedIndex++;
+        }
+        
+        return $details;
     }
 
     /**
@@ -166,6 +318,14 @@ class DocxGradingService
      */
     private function normalizeText(string $text): string
     {
+        // Normalize Unicode (NFC normalization for consistent Thai character representation)
+        if (class_exists('Normalizer')) {
+            $text = \Normalizer::normalize($text, \Normalizer::NFC);
+        }
+        
+        // Remove zero-width characters and other invisible Unicode characters
+        $text = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{00A0}]/u', ' ', $text);
+        
         // Convert to single line breaks
         $text = preg_replace('/\r\n|\r/', "\n", $text);
         
