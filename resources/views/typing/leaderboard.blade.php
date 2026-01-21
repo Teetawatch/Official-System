@@ -1,5 +1,17 @@
 <x-typing-app :role="auth()->user()->role" :title="'บอร์ดผู้นำ - ระบบวิชาพิมพ์หนังสือราชการ 1'">
     
+    @php
+        // Check once if reward system is available
+        $rewardSystemAvailable = false;
+        try {
+            $rewardSystemAvailable = \Illuminate\Support\Facades\Schema::hasColumn('users', 'equipped_frame') 
+                && \Illuminate\Support\Facades\Schema::hasTable('reward_items')
+                && class_exists(\App\Models\RewardItem::class);
+        } catch (\Exception $e) {
+            $rewardSystemAvailable = false;
+        }
+    @endphp
+
     <!-- Hero Section -->
     <div class="relative overflow-hidden bg-white border border-gray-100 rounded-3xl p-8 mb-12 text-center shadow-xl group hover:shadow-2xl transition-all duration-500">
         <!-- Decorative Background Elements -->
@@ -26,14 +38,18 @@
             <!-- 2nd Place -->
             @if(isset($top3[1]))
             @php
-                try {
-                    $equippedFrame2 = data_get($top3[1], 'equipped_frame');
-                    $equippedTitle2 = data_get($top3[1], 'equipped_title');
-                    $frame2 = $equippedFrame2 && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($equippedFrame2) : null;
-                    $title2 = $equippedTitle2 && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($equippedTitle2) : null;
-                } catch (\Exception $e) {
-                    $frame2 = null;
-                    $title2 = null;
+                $frame2 = null;
+                $title2 = null;
+                if ($rewardSystemAvailable) {
+                    try {
+                        $equippedFrame2 = data_get($top3[1], 'equipped_frame');
+                        $equippedTitle2 = data_get($top3[1], 'equipped_title');
+                        $frame2 = $equippedFrame2 ? \App\Models\RewardItem::find($equippedFrame2) : null;
+                        $title2 = $equippedTitle2 ? \App\Models\RewardItem::find($equippedTitle2) : null;
+                    } catch (\Exception $e) {
+                        $frame2 = null;
+                        $title2 = null;
+                    }
                 }
                 $frameData2 = optional($frame2)->data ?? [];
                 $frameGradient2 = $frameData2['gradient'] ?? 'from-gray-300 to-gray-500';
@@ -72,14 +88,18 @@
             <!-- 1st Place -->
             @if(isset($top3[0]))
             @php
-                try {
-                    $equippedFrame1 = data_get($top3[0], 'equipped_frame');
-                    $equippedTitle1 = data_get($top3[0], 'equipped_title');
-                    $frame1 = $equippedFrame1 && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($equippedFrame1) : null;
-                    $title1 = $equippedTitle1 && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($equippedTitle1) : null;
-                } catch (\Exception $e) {
-                    $frame1 = null;
-                    $title1 = null;
+                $frame1 = null;
+                $title1 = null;
+                if ($rewardSystemAvailable) {
+                    try {
+                        $equippedFrame1 = data_get($top3[0], 'equipped_frame');
+                        $equippedTitle1 = data_get($top3[0], 'equipped_title');
+                        $frame1 = $equippedFrame1 ? \App\Models\RewardItem::find($equippedFrame1) : null;
+                        $title1 = $equippedTitle1 ? \App\Models\RewardItem::find($equippedTitle1) : null;
+                    } catch (\Exception $e) {
+                        $frame1 = null;
+                        $title1 = null;
+                    }
                 }
                 $frameData1 = optional($frame1)->data ?? [];
                 $frameGradient1 = $frameData1['gradient'] ?? 'from-yellow-300 to-amber-500';
@@ -127,14 +147,18 @@
             <!-- 3rd Place -->
             @if(isset($top3[2]))
             @php
-                try {
-                    $equippedFrame3 = data_get($top3[2], 'equipped_frame');
-                    $equippedTitle3 = data_get($top3[2], 'equipped_title');
-                    $frame3 = $equippedFrame3 && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($equippedFrame3) : null;
-                    $title3 = $equippedTitle3 && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($equippedTitle3) : null;
-                } catch (\Exception $e) {
-                    $frame3 = null;
-                    $title3 = null;
+                $frame3 = null;
+                $title3 = null;
+                if ($rewardSystemAvailable) {
+                    try {
+                        $equippedFrame3 = data_get($top3[2], 'equipped_frame');
+                        $equippedTitle3 = data_get($top3[2], 'equipped_title');
+                        $frame3 = $equippedFrame3 ? \App\Models\RewardItem::find($equippedFrame3) : null;
+                        $title3 = $equippedTitle3 ? \App\Models\RewardItem::find($equippedTitle3) : null;
+                    } catch (\Exception $e) {
+                        $frame3 = null;
+                        $title3 = null;
+                    }
                 }
                 $frameData3 = optional($frame3)->data ?? [];
                 $frameGradient3 = $frameData3['gradient'] ?? 'from-amber-600 to-orange-700';
@@ -249,17 +273,22 @@
                                 </div>
                             @else
                                 <span class="font-medium text-gray-500 ml-2 group-hover:text-blue-600 transition-colors">{{ $rank }}</span>
+                            @endif
                         </td>
                         <td class="py-4 px-4">
                             @php
-                                try {
-                                    $studentEquippedFrame = data_get($student, 'equipped_frame');
-                                    $studentEquippedTitle = data_get($student, 'equipped_title');
-                                    $studentFrame = $studentEquippedFrame && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($studentEquippedFrame) : null;
-                                    $studentTitle = $studentEquippedTitle && class_exists(\App\Models\RewardItem::class) ? \App\Models\RewardItem::find($studentEquippedTitle) : null;
-                                } catch (\Exception $e) {
-                                    $studentFrame = null;
-                                    $studentTitle = null;
+                                $studentFrame = null;
+                                $studentTitle = null;
+                                if ($rewardSystemAvailable) {
+                                    try {
+                                        $studentEquippedFrame = data_get($student, 'equipped_frame');
+                                        $studentEquippedTitle = data_get($student, 'equipped_title');
+                                        $studentFrame = $studentEquippedFrame ? \App\Models\RewardItem::find($studentEquippedFrame) : null;
+                                        $studentTitle = $studentEquippedTitle ? \App\Models\RewardItem::find($studentEquippedTitle) : null;
+                                    } catch (\Exception $e) {
+                                        $studentFrame = null;
+                                        $studentTitle = null;
+                                    }
                                 }
                                 $studentFrameData = optional($studentFrame)->data ?? [];
                                 $studentFrameGradient = $studentFrameData['gradient'] ?? null;
