@@ -256,6 +256,8 @@ class TypingMatchController extends Controller
                     'win_rate' => ($player->match_wins + $player->match_losses) > 0
                         ? round(($player->match_wins / ($player->match_wins + $player->match_losses)) * 100)
                         : 0,
+                    'equipped_frame' => $player->equipped_frame,
+                    'equipped_title' => $player->equipped_title,
                 ];
             });
 

@@ -32,16 +32,45 @@
         
         <!-- Profile Card -->
         <div class="card text-center">
-            <div class="mb-6 relative">
-                <img 
-                    src="{{ $user->avatar_url }}" 
-                    alt="Avatar" 
-                    class="w-24 h-24 rounded-xl mx-auto shadow-lg object-cover"
-                    id="avatar-preview"
-                >
-                <label for="avatar-input" class="absolute bottom-0 right-1/2 translate-x-1/2 translate-y-2 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-600 transition-colors shadow-lg">
-                    <i class="fas fa-camera text-white text-xs"></i>
-                </label>
+            @php
+                $frameItem = $user->equipped_frame_item;
+                $titleItem = $user->equipped_title_item;
+                $themeItem = $user->equipped_theme_item;
+                $frameGradient = $frameItem && isset($frameItem->data['gradient']) 
+                    ? $frameItem->data['gradient'] 
+                    : 'from-gray-300 to-gray-400';
+            @endphp
+            
+            <div class="mb-6 relative flex flex-col items-center">
+                {{-- Avatar with Frame --}}
+                <div class="relative">
+                    <div class="w-28 h-28 rounded-full bg-gradient-to-br {{ $frameGradient }} p-1 shadow-xl">
+                        <img 
+                            src="{{ $user->avatar_url }}" 
+                            alt="Avatar" 
+                            class="w-full h-full rounded-full object-cover border-4 border-white"
+                            id="avatar-preview"
+                        >
+                    </div>
+                    @if($frameItem && isset($frameItem->data['icon']))
+                        <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-100">
+                            <span class="text-lg">{{ $frameItem->data['icon'] }}</span>
+                        </div>
+                    @endif
+                    <label for="avatar-input" class="absolute bottom-0 left-0 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-600 transition-colors shadow-lg">
+                        <i class="fas fa-camera text-white text-xs"></i>
+                    </label>
+                </div>
+                
+                {{-- Title Badge --}}
+                @if($titleItem)
+                    <div class="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r {{ $titleItem->rarity_color }} text-white font-bold text-sm shadow-lg">
+                        @if(isset($titleItem->data['emoji']))
+                            <span>{{ $titleItem->data['emoji'] }}</span>
+                        @endif
+                        <span>{{ $titleItem->name }}</span>
+                    </div>
+                @endif
             </div>
             
             <!-- Avatar Upload Form -->
@@ -64,6 +93,47 @@
                     <i class="fas fa-{{ $user->role === 'admin' ? 'shield-alt' : 'user-graduate' }} mr-1"></i>
                     {{ $user->role === 'admin' ? 'ผู้ดูแลระบบ' : 'นักเรียน' }}
                 </span>
+            </div>
+            
+            {{-- Points Display --}}
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <div class="flex items-center justify-center gap-3 px-4 py-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow">
+                        <i class="fas fa-coins text-white"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[10px] text-amber-600 font-medium uppercase tracking-wider">คะแนนสะสม</p>
+                        <p class="text-xl font-bold text-amber-700">{{ number_format($user->points ?? 0) }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            {{-- Equipped Items --}}
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-bold mb-3">ไอเทมที่ใช้งาน</p>
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg {{ $frameItem ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400' }} text-xs">
+                        <i class="fas fa-circle-user"></i>
+                        <span>{{ $frameItem ? Str::limit($frameItem->name, 10) : 'ไม่มีกรอบ' }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg {{ $themeItem ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-400' }} text-xs">
+                        <i class="fas fa-palette"></i>
+                        <span>{{ $themeItem ? Str::limit($themeItem->name, 10) : 'ไม่มีธีม' }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg {{ $titleItem ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-400' }} text-xs">
+                        <i class="fas fa-crown"></i>
+                        <span>{{ $titleItem ? Str::limit($titleItem->name, 10) : 'ไม่มีตำแหน่ง' }}</span>
+                    </div>
+                </div>
+                <div class="mt-3 flex gap-2 justify-center">
+                    <a href="{{ route('typing.shop.my-rewards') }}" class="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                        <i class="fas fa-box-open mr-1"></i> รางวัลของฉัน
+                    </a>
+                    <span class="text-gray-300">|</span>
+                    <a href="{{ route('typing.shop.index') }}" class="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                        <i class="fas fa-store mr-1"></i> ร้านค้า
+                    </a>
+                </div>
             </div>
             
             @if($user->role === 'student')

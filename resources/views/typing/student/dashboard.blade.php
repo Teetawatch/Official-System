@@ -17,20 +17,43 @@
             <path fill="currentColor" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,79.6,-46.9C87.4,-34.7,90.1,-20.4,90.9,-6.2C91.7,8,90.6,22.1,84.3,34.9C78,47.7,66.5,59.3,53.2,67.6C39.9,76,24.8,81.2,9.3,82.4C-6.2,83.6,-22.1,80.8,-36.5,73.7C-50.9,66.6,-63.8,55.2,-73.2,41.9C-82.6,28.6,-88.4,13.4,-88.1,-1.6C-87.8,-16.6,-81.4,-31.4,-70.9,-43.3C-60.4,-55.2,-45.8,-64.2,-31.2,-71.1C-16.6,-78,-2,-82.8,11.5,-81.2C25,-79.6,30.5,-83.6,44.7,-76.4Z" transform="translate(100 100)" />
         </svg>
 
+        @php
+            $frameItem = $user->equipped_frame_item;
+            $titleItem = $user->equipped_title_item;
+            $frameGradient = $frameItem && isset($frameItem->data['gradient']) 
+                ? $frameItem->data['gradient'] 
+                : 'from-blue-400 to-purple-500';
+        @endphp
+
         <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8">
-            <!-- Avatar Section -->
-            <div class="relative group cursor-pointer">
-                <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+            <!-- Avatar Section with Frame -->
+            <div class="relative group cursor-pointer flex flex-col items-center">
+                <div class="absolute -inset-1 bg-gradient-to-r {{ $frameGradient }} rounded-full blur opacity-30 group-hover:opacity-50 transition duration-500"></div>
                 <div class="relative">
-                    <img 
-                        src="{{ $user->avatar_url }}" 
-                        alt="Avatar" 
-                        class="w-24 h-24 md:w-28 md:h-28 rounded-full shadow-lg object-cover ring-4 ring-white transition-transform duration-500 group-hover:scale-105"
-                    >
-                    <div class="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow-md">
+                    <div class="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br {{ $frameGradient }} p-1 shadow-xl">
+                        <img 
+                            src="{{ $user->avatar_url }}" 
+                            alt="Avatar" 
+                            class="w-full h-full rounded-full object-cover border-4 border-white transition-transform duration-500 group-hover:scale-105"
+                        >
+                    </div>
+                    @if($frameItem && isset($frameItem->data['icon']))
+                        <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-100">
+                            <span class="text-lg">{{ $frameItem->data['icon'] }}</span>
+                        </div>
+                    @endif
+                    <div class="absolute bottom-0 left-0 bg-white p-1 rounded-full shadow-md">
                         <div class="w-5 h-5 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full border-2 border-white animate-pulse"></div>
                     </div>
                 </div>
+                
+                {{-- Title Badge under Avatar --}}
+                @if($titleItem)
+                    <div class="mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r {{ $titleItem->rarity_color }} text-white text-xs font-bold shadow-lg">
+                        @if(isset($titleItem->data['emoji']))<span>{{ $titleItem->data['emoji'] }}</span>@endif
+                        <span>{{ $titleItem->name }}</span>
+                    </div>
+                @endif
             </div>
 
             <!-- Text Content -->
@@ -39,47 +62,65 @@
                     สวัสดีคุณ <span class="text-blue-600   decoration-blue-200 decoration-2 underline-offset-4">{{ $user->name }}</span>
                 </h1>
                 
-                <p class="text-gray-500 text-lg mb-8 max-w-2xl font-medium leading-relaxed">
+                <p class="text-gray-500 text-lg mb-6 max-w-2xl font-medium leading-relaxed">
                     "ความพยายามในวันนี้ คือความสำเร็จในวันข้างหน้า" <br>
                     <span class="text-sm text-gray-400 font-normal">มาฝึกพิมพ์วันละนิด เพื่ออนาคตที่สดใสกันเถอะ! ✨</span>
                 </p>
 
                 <!-- Stats Badges -->
-                <div class="flex flex-wrap justify-center md:justify-start gap-4">
-                    <div class="group/badge flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 hover:bg-blue-50/30 transition-all duration-300">
-                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg group-hover/badge:scale-110 transition-transform">
+                <div class="flex flex-wrap justify-center md:justify-start gap-3">
+                    <div class="group/badge flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 hover:bg-blue-50/30 transition-all duration-300">
+                        <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-base group-hover/badge:scale-110 transition-transform">
                             <i class="fas fa-id-card-clip"></i>
                         </div>
                         <div class="text-left">
                             <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">รหัสนักเรียน</p>
-                            <p class="text-base font-bold text-gray-800">{{ $user->student_id ?? '-' }}</p>
+                            <p class="text-sm font-bold text-gray-800">{{ $user->student_id ?? '-' }}</p>
                         </div>
                     </div>
 
-                    <div class="group/badge flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-100 hover:bg-purple-50/30 transition-all duration-300">
-                        <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-lg group-hover/badge:scale-110 transition-transform">
+                    <div class="group/badge flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-purple-100 hover:bg-purple-50/30 transition-all duration-300">
+                        <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-base group-hover/badge:scale-110 transition-transform">
                             <i class="fas fa-graduation-cap"></i>
                         </div>
                         <div class="text-left">
                             <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">ชั้นเรียน</p>
-                            <p class="text-base font-bold text-gray-800">{{ $user->class_name ?? '-' }}</p>
+                            <p class="text-sm font-bold text-gray-800">{{ $user->class_name ?? '-' }}</p>
                         </div>
                     </div>
+                    
+                    {{-- Points Badge --}}
+                    <a href="{{ route('typing.shop.index') }}" class="group/badge flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-300">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 text-white flex items-center justify-center text-base group-hover/badge:scale-110 transition-transform shadow">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-[10px] text-amber-600 uppercase tracking-wider font-bold">คะแนนสะสม</p>
+                            <p class="text-sm font-bold text-amber-700">{{ number_format($user->points ?? 0) }} <i class="fas fa-arrow-right text-[8px] ml-1 opacity-50"></i></p>
+                        </div>
+                    </a>
                 </div>
             </div>
 
-            <!-- Action Button -->
-            <div class="mt-6 md:mt-0 relative group">
-                <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
-                <a href="{{ route('typing.profile') }}" class="relative flex items-center gap-3 px-6 py-4 bg-white text-gray-800 rounded-xl font-bold border border-gray-100 shadow-lg hover:-translate-y-1 transition-all duration-300">
-                    <div class="w-8 h-8 rounded-lg bg-gray-900 text-white flex items-center justify-center">
-                        <i class="fas fa-pen-nib text-sm"></i>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-xs text-gray-500 font-medium">ต้องการแก้ไข?</span>
-                        <span>แก้ไขข้อมูลส่วนตัว</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-gray-300 ml-2 group-hover:translate-x-1 transition-transform"></i>
+            <!-- Action Buttons -->
+            <div class="mt-6 md:mt-0 flex flex-col gap-3">
+                <div class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
+                    <a href="{{ route('typing.profile') }}" class="relative flex items-center gap-3 px-5 py-3 bg-white text-gray-800 rounded-xl font-bold border border-gray-100 shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <div class="w-8 h-8 rounded-lg bg-gray-900 text-white flex items-center justify-center">
+                            <i class="fas fa-pen-nib text-sm"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-xs text-gray-500 font-medium">ต้องการแก้ไข?</span>
+                            <span class="text-sm">แก้ไขข้อมูลส่วนตัว</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+                
+                <a href="{{ route('typing.shop.my-rewards') }}" class="flex items-center gap-3 px-5 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl font-bold shadow-lg hover:-translate-y-1 transition-all duration-300 hover:shadow-purple-500/30">
+                    <i class="fas fa-box-open"></i>
+                    <span class="text-sm">รางวัลของฉัน</span>
                 </a>
             </div>
         </div>

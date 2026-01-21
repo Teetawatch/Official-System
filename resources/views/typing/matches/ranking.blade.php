@@ -46,22 +46,38 @@
                     <!-- Rank 2 -->
                     <div class="order-2 md:order-1 flex-1 max-w-[280px] w-full group">
                         @if(isset($topPlayers[1]))
+                            @php
+                                $frame2 = $topPlayers[1]['equipped_frame'] ? \App\Models\RewardItem::find($topPlayers[1]['equipped_frame']) : null;
+                                $title2 = $topPlayers[1]['equipped_title'] ? \App\Models\RewardItem::find($topPlayers[1]['equipped_title']) : null;
+                                $frameGradient2 = $frame2 && isset($frame2->data['gradient']) ? $frame2->data['gradient'] : 'from-gray-300 to-gray-500';
+                            @endphp
                             <div class="flex flex-col items-center">
                                 <div class="relative mb-4 transition-transform group-hover:-translate-y-2 duration-300">
                                     <div
-                                        class="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-b from-gray-300 to-gray-500 shadow-xl shadow-gray-500/20">
+                                        class="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-br {{ $frameGradient2 }} shadow-xl shadow-gray-500/20">
                                         <img src="{{ $topPlayers[1]['avatar'] }}"
                                             class="w-full h-full rounded-full object-cover border-2 border-[#0f172a]">
                                     </div>
+                                    @if($frame2 && isset($frame2->data['icon']))
+                                        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md text-sm">
+                                            {{ $frame2->data['icon'] }}
+                                        </div>
+                                    @endif
                                     <div
                                         class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gray-700 text-gray-200 font-bold px-3 py-0.5 rounded-full border border-gray-500 text-sm shadow-lg">
                                         #2</div>
                                 </div>
                                 <div
-                                    class="w-full bg-gradient-to-b from-gray-700/80 to-gray-800/80 backdrop-blur-md rounded-t-2xl p-6 text-center border-t border-gray-600 h-[220px] flex flex-col items-center justify-start pt-8 relative overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_30px_rgba(156,163,175,0.3)]">
+                                    class="w-full bg-gradient-to-b from-gray-700/80 to-gray-800/80 backdrop-blur-md rounded-t-2xl p-6 text-center border-t border-gray-600 h-[240px] flex flex-col items-center justify-start pt-6 relative overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_30px_rgba(156,163,175,0.3)]">
                                     <div
                                         class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60">
                                     </div>
+                                    @if($title2)
+                                        <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r {{ $title2->rarity_color }} text-[10px] font-bold shadow mb-2 relative z-10">
+                                            @if(isset($title2->data['emoji']))<span>{{ $title2->data['emoji'] }}</span>@endif
+                                            <span>{{ $title2->name }}</span>
+                                        </div>
+                                    @endif
                                     <h3 class="font-bold text-lg text-white mb-1 relative z-10 truncate w-full px-2">
                                         {{ $topPlayers[1]['name'] }}</h3>
                                     <div class="flex items-center gap-2 text-gray-300 text-sm mb-3 relative z-10 font-mono">
@@ -87,21 +103,31 @@
                     <!-- Rank 1 -->
                     <div class="order-1 md:order-2 flex-1 max-w-[320px] w-full z-20 -mt-12 group">
                         @if(isset($topPlayers[0]))
+                            @php
+                                $frame1 = $topPlayers[0]['equipped_frame'] ? \App\Models\RewardItem::find($topPlayers[0]['equipped_frame']) : null;
+                                $title1 = $topPlayers[0]['equipped_title'] ? \App\Models\RewardItem::find($topPlayers[0]['equipped_title']) : null;
+                                $frameGradient1 = $frame1 && isset($frame1->data['gradient']) ? $frame1->data['gradient'] : 'from-yellow-300 via-yellow-500 to-orange-600';
+                            @endphp
                             <div class="flex flex-col items-center">
                                 <div class="relative mb-6 transition-transform group-hover:-translate-y-2 duration-300">
                                     <i
                                         class="fas fa-crown text-5xl text-yellow-400 absolute -top-12 left-1/2 -translate-x-1/2 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] animate-bounce-slow"></i>
                                     <div
-                                        class="w-28 h-28 md:w-36 md:h-36 rounded-full p-[4px] bg-gradient-to-b from-yellow-300 via-yellow-500 to-orange-600 shadow-2xl shadow-yellow-500/40">
+                                        class="w-28 h-28 md:w-36 md:h-36 rounded-full p-[4px] bg-gradient-to-br {{ $frameGradient1 }} shadow-2xl shadow-yellow-500/40">
                                         <img src="{{ $topPlayers[0]['avatar'] }}"
                                             class="w-full h-full rounded-full object-cover border-4 border-[#0f172a]">
                                     </div>
+                                    @if($frame1 && isset($frame1->data['icon']))
+                                        <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md text-lg">
+                                            {{ $frame1->data['icon'] }}
+                                        </div>
+                                    @endif
                                     <div
                                         class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-black px-5 py-1 rounded-full border border-yellow-400 text-base shadow-lg shadow-orange-900/50">
                                         #1</div>
                                 </div>
                                 <div
-                                    class="w-full bg-gradient-to-b from-yellow-600/20 to-orange-900/40 backdrop-blur-md rounded-t-3xl p-6 text-center border-t-2 border-yellow-500/50 h-[280px] flex flex-col items-center justify-start pt-10 relative overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_50px_rgba(234,179,8,0.4)]">
+                                    class="w-full bg-gradient-to-b from-yellow-600/20 to-orange-900/40 backdrop-blur-md rounded-t-3xl p-6 text-center border-t-2 border-yellow-500/50 h-[300px] flex flex-col items-center justify-start pt-8 relative overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_50px_rgba(234,179,8,0.4)]">
                                     <div
                                         class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10">
                                     </div>
@@ -109,9 +135,15 @@
                                         class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-yellow-500/10 to-transparent">
                                     </div>
 
+                                    @if($title1)
+                                        <div class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/30 text-xs font-bold shadow mb-2 relative z-10">
+                                            @if(isset($title1->data['emoji']))<span>{{ $title1->data['emoji'] }}</span>@endif
+                                            <span>{{ $title1->name }}</span>
+                                        </div>
+                                    @endif
                                     <h3 class="font-black text-2xl text-white mb-2 relative z-10 truncate w-full px-2">
                                         {{ $topPlayers[0]['name'] }}</h3>
-                                    <div class="flex items-center gap-2 text-yellow-200 text-lg mb-6 relative z-10 font-mono">
+                                    <div class="flex items-center gap-2 text-yellow-200 text-lg mb-4 relative z-10 font-mono">
                                         <i class="fas fa-trophy"></i> <span
                                             class="font-bold">{{ $topPlayers[0]['wins'] }}</span> Wins
                                     </div>
@@ -135,22 +167,38 @@
                     <!-- Rank 3 -->
                     <div class="order-3 md:order-3 flex-1 max-w-[280px] w-full group">
                         @if(isset($topPlayers[2]))
+                            @php
+                                $frame3 = $topPlayers[2]['equipped_frame'] ? \App\Models\RewardItem::find($topPlayers[2]['equipped_frame']) : null;
+                                $title3 = $topPlayers[2]['equipped_title'] ? \App\Models\RewardItem::find($topPlayers[2]['equipped_title']) : null;
+                                $frameGradient3 = $frame3 && isset($frame3->data['gradient']) ? $frame3->data['gradient'] : 'from-orange-400 to-amber-700';
+                            @endphp
                             <div class="flex flex-col items-center">
                                 <div class="relative mb-4 transition-transform group-hover:-translate-y-2 duration-300">
                                     <div
-                                        class="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-b from-orange-400 to-amber-700 shadow-xl shadow-orange-700/20">
+                                        class="w-20 h-20 md:w-24 md:h-24 rounded-full p-[3px] bg-gradient-to-br {{ $frameGradient3 }} shadow-xl shadow-orange-700/20">
                                         <img src="{{ $topPlayers[2]['avatar'] }}"
                                             class="w-full h-full rounded-full object-cover border-2 border-[#0f172a]">
                                     </div>
+                                    @if($frame3 && isset($frame3->data['icon']))
+                                        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md text-sm">
+                                            {{ $frame3->data['icon'] }}
+                                        </div>
+                                    @endif
                                     <div
                                         class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-amber-900 text-amber-100 font-bold px-3 py-0.5 rounded-full border border-amber-600 text-sm shadow-lg">
                                         #3</div>
                                 </div>
                                 <div
-                                    class="w-full bg-gradient-to-b from-amber-900/40 to-orange-950/40 backdrop-blur-md rounded-t-2xl p-6 text-center border-t border-amber-700/50 h-[200px] flex flex-col items-center justify-start pt-8 relative overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                                    class="w-full bg-gradient-to-b from-amber-900/40 to-orange-950/40 backdrop-blur-md rounded-t-2xl p-6 text-center border-t border-amber-700/50 h-[220px] flex flex-col items-center justify-start pt-6 relative overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_30px_rgba(245,158,11,0.2)]">
                                     <div
                                         class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60">
                                     </div>
+                                    @if($title3)
+                                        <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r {{ $title3->rarity_color }} text-[10px] font-bold shadow mb-2 relative z-10">
+                                            @if(isset($title3->data['emoji']))<span>{{ $title3->data['emoji'] }}</span>@endif
+                                            <span>{{ $title3->name }}</span>
+                                        </div>
+                                    @endif
                                     <h3 class="font-bold text-lg text-white mb-1 relative z-10 truncate w-full px-2">
                                         {{ $topPlayers[2]['name'] }}</h3>
                                     <div class="flex items-center gap-2 text-gray-300 text-sm mb-3 relative z-10 font-mono">
@@ -203,6 +251,11 @@
                                 </thead>
                                 <tbody class="divide-y divide-gray-700/30">
                                     @foreach($topPlayers as $player)
+                                        @php
+                                            $playerFrame = $player['equipped_frame'] ? \App\Models\RewardItem::find($player['equipped_frame']) : null;
+                                            $playerTitle = $player['equipped_title'] ? \App\Models\RewardItem::find($player['equipped_title']) : null;
+                                            $playerFrameGradient = $playerFrame && isset($playerFrame->data['gradient']) ? $playerFrame->data['gradient'] : null;
+                                        @endphp
                                         <tr
                                             class="hover:bg-white/5 transition-colors {{ $player['id'] === auth()->id() ? 'bg-indigo-500/10 border-l-4 border-indigo-500' : '' }}">
                                             <td class="px-6 py-4 whitespace-nowrap">
@@ -217,12 +270,34 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="flex items-center gap-3">
-                                                    <img class="h-10 w-10 rounded-full border border-gray-600"
-                                                        src="{{ $player['avatar'] }}" alt="">
+                                                    <div class="relative">
+                                                        @if($playerFrameGradient)
+                                                            <div class="h-10 w-10 rounded-full p-0.5 bg-gradient-to-br {{ $playerFrameGradient }}">
+                                                                <img class="h-full w-full rounded-full object-cover border border-[#0f172a]"
+                                                                    src="{{ $player['avatar'] }}" alt="">
+                                                            </div>
+                                                            @if(isset($playerFrame->data['icon']))
+                                                                <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow text-[8px]">
+                                                                    {{ $playerFrame->data['icon'] }}
+                                                                </div>
+                                                            @endif
+                                                        @else
+                                                            <img class="h-10 w-10 rounded-full border border-gray-600"
+                                                                src="{{ $player['avatar'] }}" alt="">
+                                                        @endif
+                                                    </div>
                                                     <div>
-                                                        <div
-                                                            class="font-bold text-white {{ $player['id'] === auth()->id() ? 'text-indigo-400' : '' }}">
-                                                            {{ $player['name'] }}</div>
+                                                        <div class="flex items-center gap-2 flex-wrap">
+                                                            <span
+                                                                class="font-bold text-white {{ $player['id'] === auth()->id() ? 'text-indigo-400' : '' }}">
+                                                                {{ $player['name'] }}</span>
+                                                            @if($playerTitle)
+                                                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gradient-to-r {{ $playerTitle->rarity_color }} text-white text-[9px] font-bold shadow-sm">
+                                                                    @if(isset($playerTitle->data['emoji']))<span>{{ $playerTitle->data['emoji'] }}</span>@endif
+                                                                    <span>{{ $playerTitle->name }}</span>
+                                                                </span>
+                                                            @endif
+                                                        </div>
                                                         <div class="text-xs text-gray-500">
                                                             {{ $player['class_name'] ?? 'Classroom' }}</div>
                                                     </div>
