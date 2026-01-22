@@ -142,7 +142,7 @@ class TypingMatchController extends Controller
             }
 
             // Check if both ready to start
-            $p2Ready = $match->player2_id ? $match->player2_ready : true;
+            $p2Ready = $match->player2_id ? $match->player2_ready : false;
             
             $shouldStart = ($match->player1_ready && $p2Ready);
             $overrideStartedAt = null;
@@ -293,15 +293,21 @@ class TypingMatchController extends Controller
                     // Decode if it's a string (DB might return string for json column depending on driver/cast)
                     if (is_string($config)) $config = json_decode($config, true);
 
+                    $useWpmAsPoints = isset($config['use_wpm_as_points']) && $config['use_wpm_as_points'];
+
                     $points = 0;
-                    if ($rank === 1) $points = intval($config['first_place'] ?? 100);
-                    else if ($rank === 2) $points = intval($config['second_place'] ?? 90);
-                    else if ($rank === 3) $points = intval($config['third_place'] ?? 80);
-                    else {
-                        $base = intval($config['third_place'] ?? 80);
-                        $decr = intval($config['decrement'] ?? 2);
-                        $min = intval($config['min_points'] ?? 10);
-                        $points = max($min, $base - (($rank - 3) * $decr));
+                    if ($useWpmAsPoints) {
+                        $points = intval($finalWpm);
+                    } else {
+                        if ($rank === 1) $points = intval($config['first_place'] ?? 100);
+                        else if ($rank === 2) $points = intval($config['second_place'] ?? 90);
+                        else if ($rank === 3) $points = intval($config['third_place'] ?? 80);
+                        else {
+                            $base = intval($config['third_place'] ?? 80);
+                            $decr = intval($config['decrement'] ?? 2);
+                            $min = intval($config['min_points'] ?? 10);
+                            $points = max($min, $base - (($rank - 3) * $decr));
+                        }
                     }
                     
                     $user->increment('points', $points);

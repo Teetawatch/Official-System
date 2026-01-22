@@ -57,10 +57,16 @@
 
                         <!-- Timer (If time limit exists) -->
                         <div class="flex flex-col items-center" x-show="!finished && timeLimit">
-                            <span class="text-xs text-gray-400 font-bold uppercase tracking-widest">Time</span>
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Time Remaining</span>
                             <span class="text-3xl font-black text-white font-mono" 
                                   :class="timeLeft <= 10 ? 'text-red-500 animate-pulse' : ''"
                                   x-text="formatTime(timeLeft)"></span>
+                        </div>
+
+                        <!-- Participants Count (Classroom Mode) -->
+                        <div class="mt-1 flex items-center gap-1 bg-indigo-500/20 px-3 py-1 rounded-full border border-indigo-500/30" x-show="!player2">
+                            <i class="fas fa-users text-indigo-400 text-xs"></i>
+                            <span class="text-xs font-bold text-white"><span x-text="others.length + 1"></span> Participants</span>
                         </div>
                         <div class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)] animate-bounce"
                             x-show="finished && winnerId == currentUserId">VICTORY!</div>
@@ -127,7 +133,7 @@
         </div>
 
         <!-- Main Game Area -->
-        <div class="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center relative z-10">
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center justify-start relative z-10 py-8 md:py-16">
 
             <!-- Waiting Overlay -->
             <div x-show="!started && !countdown"
@@ -271,8 +277,8 @@
                         <span
                             class="text-gray-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-colors duration-100"
                             x-text="completedText"></span><span
-                            class="bg-indigo-500/30 text-indigo-200 rounded border-b-2 border-indigo-500 animate-pulse"
-                            x-text="currentChar"></span><span class="text-gray-700" x-text="remainingText"></span>
+                            class="bg-indigo-500/30 text-indigo-400 rounded border-b-2 border-indigo-500 animate-pulse"
+                            x-text="currentChar"></span><span class="text-gray-500" x-text="remainingText"></span>
                     </div>
                 </div>
 
@@ -286,30 +292,69 @@
                 </div>
             </div>
             <!-- Peer Progress (Classroom Battle Only) -->
-            <div x-show="!player2 && others.length > 0" class="w-full max-w-4xl mt-6">
-                <div class="bg-[#1e293b]/30 backdrop-blur-sm rounded-xl border border-white/5 p-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                            <i class="fas fa-users text-indigo-400"></i> เพื่อนร่วมชั้นเรียน (Top 5)
+            <div x-show="!player2 && (others.length > 0 || finished)" class="w-full max-w-4xl mt-8">
+                <div class="bg-[#1e293b]/60 backdrop-blur-xl rounded-2xl border border-white/10 p-6 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <i class="fas fa-flag-checkered text-6xl"></i>
+                    </div>
+
+                    <div class="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+                        <h4 class="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                            <span class="w-2 h-6 bg-indigo-500 rounded-full"></span>
+                            Live Standings (อันดับการแข่ง)
                         </h4>
-                        <span class="text-[10px] text-gray-500" x-text="others.length + ' others in race'"></span>
+                        <div class="flex items-center gap-4 text-[10px] font-bold">
+                            <span class="flex items-center gap-1 text-green-400">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                LIVE PROGRESS
+                            </span>
+                        </div>
                     </div>
                     
-                    <div class="space-y-3">
-                        <template x-for="(other, index) in others.sort((a,b) => b.progress - a.progress).slice(0, 5)" :key="index">
-                            <div class="relative">
-                                <div class="flex items-center justify-between text-[10px] mb-1 px-1">
-                                    <span class="text-gray-300 flex items-center gap-1">
-                                        <img :src="other.avatar" class="w-4 h-4 rounded-full">
-                                        <span x-text="other.name"></span>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        <!-- Current User (YOU) in list -->
+                        <div class="relative bg-indigo-500/10 p-3 rounded-xl border border-indigo-500/30">
+                            <div class="flex items-center justify-between text-xs mb-2">
+                                <span class="text-white font-bold flex items-center gap-2">
+                                    <img :src="player1.avatar" class="w-6 h-6 rounded-full border border-indigo-400 shadow-sm">
+                                    <span class="text-indigo-300">YOU</span>
+                                    <span x-text="player1.name"></span>
+                                </span>
+                                <span class="text-indigo-400 font-black" x-text="player1.progress + '%'"></span>
+                            </div>
+                            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-indigo-500 to-blue-400 transition-all duration-300 shadow-[0_0_10px_rgba(79,70,229,0.5)]" :style="`width: ${player1.progress}%`"></div>
+                            </div>
+                        </div>
+
+                        <!-- Others -->
+                        <template x-for="(other, index) in others.sort((a,b) => b.progress - a.progress)" :key="index">
+                            <div class="relative p-3 rounded-xl border border-white/5 hover:bg-white/5 transition-all">
+                                <div class="flex items-center justify-between text-xs mb-2">
+                                    <span class="text-gray-300 flex items-center gap-2">
+                                        <img :src="other.avatar" class="w-6 h-6 rounded-full border border-gray-600">
+                                        <span x-text="other.name" class="truncate max-w-[120px]"></span>
+                                        <template x-if="other.status === 'completed'">
+                                            <i class="fas fa-check-circle text-green-500 text-[10px]"></i>
+                                        </template>
                                     </span>
-                                    <span class="text-indigo-400 font-bold" x-text="other.progress + '%'"></span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-500 font-mono" x-show="other.wpm > 0" x-text="other.wpm + ' WPM'"></span>
+                                        <span class="text-white font-bold" :class="other.progress == 100 ? 'text-green-400' : ''" x-text="other.progress + '%'"></span>
+                                    </div>
                                 </div>
-                                <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-indigo-500/50 transition-all duration-500" :style="`width: ${other.progress}%`"></div>
+                                <div class="h-1.5 bg-gray-900 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gray-600 transition-all duration-700 ease-out" 
+                                         :class="other.progress == 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : (other.progress > 0 ? 'bg-indigo-500/40' : '')"
+                                         :style="`width: ${other.progress}%`"></div>
                                 </div>
                             </div>
                         </template>
+                    </div>
+
+                    <div x-show="others.length === 0" class="py-10 text-center">
+                        <div class="text-gray-600 mb-2 mt-4"><i class="fas fa-user-clock text-3xl opacity-20"></i></div>
+                        <p class="text-gray-500 text-xs italic">กําลังรอเพื่อนคนอื่นๆ เข้ามาประลองความเร็ว...</p>
                     </div>
                 </div>
             </div>
@@ -488,8 +533,12 @@
                         return;
                     }
 
-                    if (charTyped === targetChar) {
-                        this.inputText += charTyped;
+                    // For Thai and other complex inputs, it's better to check if the new input value 
+                    // matches the next expected part of the target text.
+                    const expectedTotal = this.targetText.substring(0, this.currIndex + 1);
+                    
+                    if (inputVal === expectedTotal) {
+                        this.inputText = inputVal;
                         this.currIndex++;
                         this.updateTextDisplay();
                         this.calculateStats();

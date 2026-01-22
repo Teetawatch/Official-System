@@ -95,16 +95,14 @@ class TypingController extends Controller
         
         // Get leaderboard (top 5)
         $leaderboard = User::where('role', 'student')
-            ->withSum('typingSubmissions', 'score')
-            ->orderByDesc('typing_submissions_sum_score')
+            ->orderByDesc('points')
             ->take(5)
             ->get();
         
         // Get user rank
         $userRank = User::where('role', 'student')
-            ->withSum('typingSubmissions', 'score')
+            ->orderByDesc('points')
             ->get()
-            ->sortByDesc('typing_submissions_sum_score')
             ->values()
             ->search(function($u) use ($user) {
                 return $u->id === $user->id;
@@ -236,9 +234,8 @@ class TypingController extends Controller
         
         // Get user rank
         $userRank = User::where('role', 'student')
-            ->withSum('typingSubmissions', 'score')
+            ->orderByDesc('points')
             ->get()
-            ->sortByDesc('typing_submissions_sum_score')
             ->values()
             ->search(function($u) use ($userId) {
                 return $u->id === $userId;
@@ -326,7 +323,6 @@ class TypingController extends Controller
         
         // Build query with filters
         $query = User::where('role', 'student')
-            ->withSum('typingSubmissions', 'score')
             ->withCount('typingSubmissions')
             ->with(['equippedFrame', 'equippedTheme', 'equippedTitle']);
         
@@ -345,15 +341,14 @@ class TypingController extends Controller
             $query->where('class_name', $classFilter);
         }
         
-        $students = $query->orderByDesc('typing_submissions_sum_score')
+        $students = $query->orderByDesc('points')
             ->paginate(20)
             ->withQueryString(); // Preserve query string for pagination
         
         // Get top 3 for podium (always unfiltered)
         $top3 = User::where('role', 'student')
-            ->withSum('typingSubmissions', 'score')
             ->with(['equippedFrame', 'equippedTheme', 'equippedTitle'])
-            ->orderByDesc('typing_submissions_sum_score')
+            ->orderByDesc('points')
             ->take(3)
             ->get();
         

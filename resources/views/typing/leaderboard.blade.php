@@ -26,7 +26,7 @@
                 บอร์ดผู้นำ
             </h1>
             <p class="text-gray-500 text-lg max-w-2xl mx-auto">
-                ทำเนียบสุดยอดนักพิมพ์หนังสือราชการ รวมพลคนเก่งที่มีความเร็วและความแม่นยำสูงสุด
+                ทำเนียบสุดยอดนักพิมพ์จากสมรภูมิ Classroom Battle รวมพลผู้ชนะที่มีความเร็วและความแม่นยำสูงสุด
             </p>
         </div>
     </div>
@@ -82,7 +82,7 @@
                             </div>
                         @endif
                         <p class="font-bold text-sm md:text-base truncate relative z-10 {{ $ncClass2 }}">{{ $top3[1]->name }}</p>
-                        <p class="text-xs opacity-90 relative z-10 mt-1">{{ number_format($top3[1]->typing_submissions_sum_score ?? 0) }} คะแนน</p>
+                        <p class="text-xs opacity-90 relative z-10 mt-1">{{ number_format($top3[1]->points ?? 0) }} คะแนน</p>
                     </div>
                 </div>
             </div>
@@ -139,7 +139,7 @@
                             <div class="inline-block bg-white/20 rounded-lg px-2 py-1 mt-2">
                                 <p class="text-sm font-bold flex items-center gap-1">
                                     <i class="fas fa-bolt text-yellow-200"></i>
-                                    {{ number_format($top3[0]->typing_submissions_sum_score ?? 0) }}
+                                    {{ number_format($top3[0]->points ?? 0) }}
                                 </p>
                             </div>
                             <p class="text-[10px] opacity-80 mt-1">คะแนนรวมสูงสุด</p>
@@ -195,7 +195,7 @@
                             </div>
                         @endif
                         <p class="font-bold text-sm md:text-base truncate relative z-10 {{ $ncClass3 }}">{{ $top3[2]->name }}</p>
-                        <p class="text-xs opacity-90 relative z-10 mt-1">{{ number_format($top3[2]->typing_submissions_sum_score ?? 0) }} คะแนน</p>
+                        <p class="text-xs opacity-90 relative z-10 mt-1">{{ number_format($top3[2]->points ?? 0) }} คะแนน</p>
                     </div>
                 </div>
             </div>
@@ -217,7 +217,7 @@
                     </span>
                     อันดับทั้งหมด
                 </h2>
-                <p class="text-sm text-gray-500 mt-1 ml-10">รายชื่อนักเรียนเรียงตามคะแนนรวมจากทุกบทเรียน</p>
+                <p class="text-sm text-gray-500 mt-1 ml-10">รายชื่อนักเรียนเรียงตามคะแนนสะสมจากการแข่งขัน Classroom Battle</p>
             </div>
             
             <div class="flex items-center gap-3 w-full md:w-auto">
@@ -260,7 +260,7 @@
                     @php
                         $rank = ($students->currentPage() - 1) * $students->perPage() + $index + 1;
                         $isCurrentUser = $student->id === $user->id;
-                        $score = $student->typing_submissions_sum_score ?? 0;
+                        $score = $student->points ?? 0;
                         $submittedCount = $student->typing_submissions_count ?? 0;
                         $submittedPercent = $totalAssignments > 0 ? min(100, ($submittedCount / $totalAssignments) * 100) : 0;
                     @endphp

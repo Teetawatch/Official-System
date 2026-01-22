@@ -108,12 +108,11 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @php
-                                // Sort: Completed (by Time), then Ongoing (by WPM), then Pending
-                                $completedMatches = $tournament->matches->where('status', 'completed')->sortBy('completed_at');
-                                $ongoingMatches = $tournament->matches->where('status', 'ongoing')->sortByDesc('player1_wpm');
+                                // Sort: Completed/Ongoing (by WPM), then Pending
+                                $matchesWithActivity = $tournament->matches->whereIn('status', ['completed', 'ongoing'])->sortByDesc('player1_wpm');
                                 $pendingMatches = $tournament->matches->whereNotIn('status', ['completed', 'ongoing']);
                                 
-                                $sortedMatches = $completedMatches->concat($ongoingMatches)->concat($pendingMatches);
+                                $sortedMatches = $matchesWithActivity->concat($pendingMatches);
                                 $rank = 1;
                             @endphp
                             @forelse($sortedMatches as $match)
@@ -137,18 +136,22 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($match->status === 'completed')
-                                            @php
                                                 $points = 0;
                                                 $config = $tournament->scoring_config ?? ['first_place' => 100, 'second_place' => 90, 'third_place' => 80, 'decrement' => 2, 'min_points' => 10];
-                                                
-                                                if ($rank === 1) $points = intval($config['first_place'] ?? 100);
-                                                else if ($rank === 2) $points = intval($config['second_place'] ?? 90);
-                                                else if ($rank === 3) $points = intval($config['third_place'] ?? 80);
-                                                else {
-                                                    $base = intval($config['third_place'] ?? 80);
-                                                    $decr = intval($config['decrement'] ?? 2);
-                                                    $min = intval($config['min_points'] ?? 10);
-                                                    $points = max($min, $base - (($rank - 3) * $decr));
+                                                if (is_string($config)) $config = json_decode($config, true);
+
+                                                if (isset($config['use_wpm_as_points']) && $config['use_wpm_as_points']) {
+                                                    $points = intval($match->player1_wpm);
+                                                } else {
+                                                    if ($rank === 1) $points = intval($config['first_place'] ?? 100);
+                                                    else if ($rank === 2) $points = intval($config['second_place'] ?? 90);
+                                                    else if ($rank === 3) $points = intval($config['third_place'] ?? 80);
+                                                    else {
+                                                        $base = intval($config['third_place'] ?? 80);
+                                                        $decr = intval($config['decrement'] ?? 2);
+                                                        $min = intval($config['min_points'] ?? 10);
+                                                        $points = max($min, $base - (($rank - 3) * $decr));
+                                                    }
                                                 }
                                             @endphp
                                             <span class="px-2 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-800">

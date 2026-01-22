@@ -38,13 +38,19 @@
                     
                     <div class="mb-6">
                         <label class="block text-sm font-bold text-gray-700 mb-2">ชื่อการแข่งขัน</label>
-                        <input type="text" name="name" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" 
-                               value="{{ request('type') == 'class_battle' ? 'Classroom Battle Room #' . rand(1, 999) : 'Weekly Speed Cubing #' . rand(1, 999) }}" required>
+                        <input type="text" name="name" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('name') border-red-500 @enderror" 
+                               value="{{ old('name', request('type') == 'class_battle' ? 'Classroom Battle Room #' . rand(1, 999) : 'Weekly Speed Cubing #' . rand(1, 999)) }}" required>
+                        @error('name')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="mb-6">
                         <label class="block text-sm font-bold text-gray-700 mb-2">รายละเอียด</label>
-                        <textarea name="description" rows="3" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" required>{{ request('type') == 'class_battle' ? 'Compete with the entire class! Free for all.' : 'A bracket tournament for the fastest typists!' }}</textarea>
+                        <textarea name="description" rows="3" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('description') border-red-500 @enderror" required>{{ old('description', request('type') == 'class_battle' ? 'Compete with the entire class! Free for all.' : 'A bracket tournament for the fastest typists!') }}</textarea>
+                        @error('description')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="mb-6">
@@ -69,10 +75,13 @@
                         </div>
                     </div>
                     
-                    <div class="mb-6" x-data="{ type: '{{ request('type') ?? 'bracket' }}' }" x-init="$watch('$el.closest(\'form\').type.value', value => type = value)" @change="type = $event.target.form.type.value">
+                    <div class="mb-6" x-data="{ type: '{{ old('type', request('type') ?? 'bracket') }}' }" x-init="$watch('$el.closest(\'form\').type.value', value => type = value)" @change="type = $event.target.form.type.value">
                         <label class="block text-sm font-bold text-gray-700 mb-2">จำนวนผู้เข้าร่วมสูงสุด</label>
-                        <input type="number" name="max_participants" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" 
-                               :value="type === 'class_battle' ? 100 : 16">
+                        <input type="number" name="max_participants" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('max_participants') border-red-500 @enderror" 
+                               value="{{ old('max_participants', request('type') == 'class_battle' ? 100 : 16) }}">
+                        @error('max_participants')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Game Settings -->
@@ -86,7 +95,10 @@
                                 กำหนดบทความเอง (Custom Text)
                                 <span class="text-xs font-normal text-gray-500">(ถ้าไม่ใส่ จะสุ่มบทความให้)</span>
                             </label>
-                            <textarea name="custom_text" rows="4" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="พิมพข้อความที่ต้องการใช้แข่งขันที่นี่..."></textarea>
+                            <textarea name="custom_text" rows="4" class="form-input w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('custom_text') border-red-500 @enderror" placeholder="พิมพ์ข้อความที่ต้องการใช้แข่งขันที่นี่...">{{ old('custom_text') }}</textarea>
+                            @error('custom_text')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div class="mb-4">
@@ -94,7 +106,10 @@
                                 จำกัดเวลา (วินาที)
                                 <span class="text-xs font-normal text-gray-500">(ถ้าไม่ใส่ คือไม่จำกัดเวลา)</span>
                             </label>
-                            <input type="number" name="time_limit" min="30" max="1800" class="form-input w-full md:w-1/2 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="เช่น 60, 120 (วินาที)">
+                            <input type="number" name="time_limit" min="30" max="1800" class="form-input w-full md:w-1/2 rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 @error('time_limit') border-red-500 @enderror" placeholder="เช่น 60, 120 (วินาที)" value="{{ old('time_limit') }}">
+                            @error('time_limit')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -129,10 +144,21 @@
                                 <p class="text-[10px] text-indigo-400 mt-1">อันดับ 4, 5, 6... จะลดลงเรื่อยๆ</p>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-indigo-600 uppercase">คะแนนขั้นตำ (Min)</label>
+                                <label class="text-xs font-bold text-indigo-600 uppercase">คะแนนขั้นต่ำ (Min)</label>
                                 <input type="number" name="scoring_config[min_points]" value="10" class="mt-1 w-full rounded-md border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500">
                                 <p class="text-[10px] text-indigo-400 mt-1">ผู้เข้าร่วมทุกคนจะได้ไม่ต่ำกว่านี้</p>
                             </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-indigo-100 flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-sm text-indigo-900">ใช้หลักการ WPM คำนวณคะแนน?</h4>
+                                <p class="text-[10px] text-indigo-500">ถ้าเปิดใช้งาน คะแนนที่ได้จะเป็นค่า WPM ของผู้เล่นโดยตรง แทนการจัดอันดับ</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="scoring_config[use_wpm_as_points]" value="1" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
                         </div>
                     </div>
 

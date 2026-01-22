@@ -41,6 +41,9 @@ class TournamentController extends Controller
         $description = $request->input('description');
         $maxParticipants = $request->input('max_participants');
         $customText = $request->input('custom_text');
+        if ($customText) {
+            $customText = str_replace(["\r\n", "\r"], "\n", trim($customText));
+        }
         $timeLimit = $request->input('time_limit');
 
         $scoringConfig = null;
@@ -71,7 +74,7 @@ class TournamentController extends Controller
             'time_limit' => $timeLimit,
         ]);
 
-        return redirect()->route('typing.tournaments.index')->with('success', 'Tournament created!');
+        return redirect()->route('typing.tournaments.show', $tournament->id)->with('success', 'Tournament created!');
     }
 
     public function destroy($id)
@@ -148,7 +151,7 @@ class TournamentController extends Controller
                                    ->get();
         }
 
-        $isAdmin = $this->isAdmin($user);
+        $isAdmin = $this->isAdmin(Auth::user());
 
         return view('typing.tournaments.show', compact('tournament', 'matchesByRound', 'nonParticipants', 'isAdmin'));
     }
