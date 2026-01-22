@@ -148,7 +148,29 @@ class TournamentController extends Controller
                                    ->get();
         }
 
-        return view('typing.tournaments.show', compact('tournament', 'matchesByRound', 'nonParticipants'));
+        $isAdmin = $this->isAdmin($user);
+
+        return view('typing.tournaments.show', compact('tournament', 'matchesByRound', 'nonParticipants', 'isAdmin'));
+    }
+
+    public function startRace($id)
+    {
+        $tournament = Tournament::findOrFail($id);
+        
+        if ($tournament->type !== 'class_battle' || $tournament->status !== 'ongoing') {
+            return back()->with('error', 'Invalid tournament type or status.');
+        }
+
+        if ($tournament->race_started_at) {
+            return back()->with('info', 'Race already started.');
+        }
+
+        // Set race start to 10 seconds from now
+        $tournament->update([
+            'race_started_at' => now()->addSeconds(10)
+        ]);
+
+        return back()->with('success', 'Global Race Countdown started!');
     }
 
     private function startTournament(Tournament $tournament)

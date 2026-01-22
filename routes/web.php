@@ -141,6 +141,7 @@ Route::prefix('typing')->name('typing.')->group(function () {
             Route::delete('/{id}', [App\Http\Controllers\TournamentController::class, 'destroy'])->name('destroy');
             Route::post('/{id}/join', [App\Http\Controllers\TournamentController::class, 'join'])->name('join');
             Route::post('/{id}/start', [App\Http\Controllers\TournamentController::class, 'start'])->name('start');
+            Route::post('/{id}/start-race', [App\Http\Controllers\TournamentController::class, 'startRace'])->name('start-race');
             Route::get('/{id}', [App\Http\Controllers\TournamentController::class, 'show'])->name('show');
         });
 

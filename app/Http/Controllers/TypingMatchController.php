@@ -143,18 +143,50 @@ class TypingMatchController extends Controller
 
             // Check if both ready to start
             $p2Ready = $match->player2_id ? $match->player2_ready : true;
-            if ($match->player1_ready && $p2Ready) {
+            
+            $shouldStart = ($match->player1_ready && $p2Ready);
+            $overrideStartedAt = null;
+
+            // Classroom Battle Synchronized Start
+            if ($match->tournament_id && $match->tournament->type === 'class_battle') {
+                if ($match->tournament->race_started_at) {
+                    $shouldStart = true;
+                    $overrideStartedAt = $match->tournament->race_started_at;
+                } else {
+                    $shouldStart = false; // Wait for teacher
+                }
+            }
+
+            if ($shouldStart) {
                 // Use transaction to ensure only one thread starts it
-                DB::transaction(function () use ($match) {
+                DB::transaction(function () use ($match, $overrideStartedAt) {
                     $m = TypingMatch::lockForUpdate()->find($match->id);
                     if ($m->status === 'pending') {
                         $m->status = 'ongoing';
-                        $m->started_at = now()->addSeconds(5);
+                        $m->started_at = $overrideStartedAt ?? now()->addSeconds(5);
                         $m->save();
                     }
                 });
                 $match->refresh();
             }
+        }
+
+        // Fetch other players progress if in a tournament
+        $others = [];
+        if ($match->tournament_id && $match->tournament->type === 'class_battle') {
+            $others = TypingMatch::where('tournament_id', $match->tournament_id)
+                ->where('id', '!=', $match->id)
+                ->with('player1')
+                ->get()
+                ->map(function($m) {
+                    return [
+                        'name' => $m->player1->name,
+                        'progress' => $m->player1_progress,
+                        'wpm' => $m->player1_wpm,
+                        'status' => $m->status,
+                        'avatar' => $m->player1->avatar_url
+                    ];
+                });
         }
 
         return response()->json([
@@ -179,6 +211,11 @@ class TypingMatchController extends Controller
             ] : null,
             'winner' => $match->winner ? $match->winner->name : null,
             'winner_id' => $match->winner_id,
+            'others' => $others,
+            'tournament_race' => $match->tournament_id ? [
+                'type' => $match->tournament->type,
+                'race_started_at' => $match->tournament->race_started_at,
+            ] : null
         ]);
     }
 

@@ -153,12 +153,15 @@
                         <p class="text-gray-400 mb-4">รอผู้เล่นทุกคนพร้อม... (<span x-text="readyCount">0</span>/2)</p>
                     </template>
                     <template x-if="!player2">
-                        <p class="text-gray-400 mb-4">กดปุ่มเริ่มเพื่อเริ่มการทดสอบ</p>
+                        <div>
+                            <p class="text-gray-400 mb-2" x-show="!startTime && (others.length > 0)">กําลังรอนักเรียนคนอื่นๆ เข้าห้อง... (<span x-text="others.length + 1"></span> คน)</p>
+                            <p class="text-indigo-400 font-bold mb-4 animate-pulse">รอครูผู้สอนกดเริ่มการแข่งขันพร้อมกัน</p>
+                        </div>
                     </template>
                     
                     <div class="flex gap-4 justify-center text-xs font-mono text-gray-500">
                          <div :class="player1.ready ? 'text-green-400' : 'text-gray-500'">
-                             <span x-text="player2 ? 'YOU (' + player1.name + ')' : 'READY STATUS'"></span>
+                             <span x-text="player2 ? 'YOU (' + player1.name + ')' : 'READY STATUS: JOINED'"></span>
                          </div>
                          <div x-show="player2" :class="player2 && player2.ready ? 'text-green-400' : 'text-gray-500'">OPPONENT</div>
                     </div>
@@ -282,6 +285,34 @@
                     <i class="fas fa-keyboard"></i> Focus mode active
                 </div>
             </div>
+            <!-- Peer Progress (Classroom Battle Only) -->
+            <div x-show="!player2 && others.length > 0" class="w-full max-w-4xl mt-6">
+                <div class="bg-[#1e293b]/30 backdrop-blur-sm rounded-xl border border-white/5 p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                            <i class="fas fa-users text-indigo-400"></i> เพื่อนร่วมชั้นเรียน (Top 5)
+                        </h4>
+                        <span class="text-[10px] text-gray-500" x-text="others.length + ' others in race'"></span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <template x-for="(other, index) in others.sort((a,b) => b.progress - a.progress).slice(0, 5)" :key="index">
+                            <div class="relative">
+                                <div class="flex items-center justify-between text-[10px] mb-1 px-1">
+                                    <span class="text-gray-300 flex items-center gap-1">
+                                        <img :src="other.avatar" class="w-4 h-4 rounded-full">
+                                        <span x-text="other.name"></span>
+                                    </span>
+                                    <span class="text-indigo-400 font-bold" x-text="other.progress + '%'"></span>
+                                </div>
+                                <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
+                                    <div class="h-full bg-indigo-500/50 transition-all duration-500" :style="`width: ${other.progress}%`"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -316,6 +347,7 @@
                     ready: initialMatch.player1_ready || false
                 },
                 
+                others: [],
                 countdown: 0,
 
                 get readyCount() {
@@ -586,6 +618,11 @@
                             clearInterval(this.pollInterval);
                         } else if (!this.finished) {
                             this.sendProgress();
+                        }
+
+                        // Update Others Progress
+                        if (data.others) {
+                            this.others = data.others;
                         }
 
                     } catch (error) {

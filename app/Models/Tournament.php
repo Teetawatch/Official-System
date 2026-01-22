@@ -20,10 +20,12 @@ class Tournament extends Model
         'scoring_config',
         'custom_text',
         'time_limit',
+        'race_started_at',
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
+        'race_started_at' => 'datetime',
         'scoring_config' => 'array',
     ];
 

@@ -72,12 +72,25 @@
                         @php
                             $myMatch = $tournament->matches->where('player1_id', Auth::id())->first();
                         @endphp
-                        @if($myMatch)
-                            <a href="{{ route('typing.student.matches.show', $myMatch->id) }}" class="btn-primary animate-pulse">
-                                <i class="fas fa-gamepad mr-2"></i>
-                                เข้าห้องแข่งขัน
-                            </a>
-                        @endif
+                        
+                        <div class="flex gap-2">
+                            @if($isAdmin && !$tournament->race_started_at)
+                                <form action="{{ route('typing.tournaments.start-race', $tournament->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn-primary bg-indigo-600 hover:bg-indigo-700">
+                                        <i class="fas fa-flag-checkered mr-2"></i>
+                                        เริ่มการแข่งขันพร้อมกัน (Global Start)
+                                    </button>
+                                </form>
+                            @endif
+
+                            @if($myMatch)
+                                <a href="{{ route('typing.student.matches.show', $myMatch->id) }}" class="btn-primary animate-pulse">
+                                    <i class="fas fa-gamepad mr-2"></i>
+                                    เข้าห้องแข่งขัน
+                                </a>
+                            @endif
+                        </div>
                     @endif
                 </div>
 
