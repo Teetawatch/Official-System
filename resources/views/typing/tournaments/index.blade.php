@@ -11,10 +11,18 @@
         </div>
 
         @if(Auth::user()->role === 'admin' || Auth::user()->role === 'teacher')
-            <a href="{{ route('typing.tournaments.create') }}" class="btn-primary inline-flex items-center gap-2">
-                <i class="fas fa-plus"></i>
-                สร้างการแข่งขัน
-            </a>
+        @if(Auth::user()->role === 'admin' || Auth::user()->role === 'teacher')
+            <div class="flex gap-2">
+                <a href="{{ route('typing.tournaments.create', ['type' => 'bracket']) }}" class="btn-primary inline-flex items-center gap-2">
+                    <i class="fas fa-sitemap"></i>
+                    สร้าง Bracket
+                </a>
+                <a href="{{ route('typing.tournaments.create', ['type' => 'class_battle']) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl shadow-lg transition-all inline-flex items-center gap-2">
+                    <i class="fas fa-users-class"></i>
+                    สร้างห้อง Classroom
+                </a>
+            </div>
+        @endif
         @endif
     </div>
 
@@ -32,6 +40,11 @@
                             <p class="text-gray-500 text-sm mt-1 line-clamp-2">
                                 {{ $tournament->description }}
                             </p>
+                            @if($tournament->type === 'class_battle')
+                                <span class="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700 rounded-md">Classroom Battle</span>
+                            @else
+                                <span class="inline-block mt-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 rounded-md">Bracket Tournament</span>
+                            @endif
                         </div>
                         <span class="px-3 py-1 text-xs font-semibold rounded-full 
                                 @if($tournament->status === 'open')
@@ -84,8 +97,36 @@
                     <a href="{{ route('typing.tournaments.show', $tournament->id) }}"
                         class="btn-secondary w-full text-center flex items-center justify-center gap-2">
                         <i class="fas fa-eye"></i>
-                        ดู Bracket
+                        ดูข้อมูล
                     </a>
+                    
+                    @if((Auth::user()->role === 'admin' || Auth::user()->role === 'teacher') && $tournament->status !== 'completed')
+                         <div class="mt-2 flex gap-2">
+                              @if($tournament->status === 'open')
+                                <form action="{{ route('typing.tournaments.start', $tournament->id) }}" method="POST" class="flex-1">
+                                    @csrf
+                                    <button type="submit" class="w-full bg-green-50 text-green-600 hover:bg-green-100 font-bold py-2 px-4 rounded-lg text-sm transition-colors border border-green-200">
+                                        <i class="fas fa-play mr-1"></i> เริ่มทันที
+                                    </button>
+                                </form>
+                              @endif
+                            <form action="{{ route('typing.tournaments.destroy', $tournament->id) }}" method="POST" onsubmit="return confirm('ยืนยันลบการแข่งขันนี้? ข้อมูลทั้งหมดจะหายไป');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-red-50 text-red-600 hover:bg-red-100 font-bold py-2 px-4 rounded-lg text-sm transition-colors border border-red-200" title="Delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                         </div>
+                    @elseif((Auth::user()->role === 'admin' || Auth::user()->role === 'teacher'))
+                        <form action="{{ route('typing.tournaments.destroy', $tournament->id) }}" method="POST" onsubmit="return confirm('ยืนยันลบการแข่งขันนี้? ข้อมูลทั้งหมดจะหายไป');" class="mt-2 text-center">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-400 hover:text-red-500 text-sm underline">
+                                ลบประวัติ
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
         @empty

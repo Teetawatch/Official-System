@@ -137,7 +137,9 @@ Route::prefix('typing')->name('typing.')->group(function () {
         Route::prefix('tournaments')->name('tournaments.')->group(function () {
             Route::get('/', [App\Http\Controllers\TournamentController::class, 'index'])->name('index');
             Route::get('/create', [App\Http\Controllers\TournamentController::class, 'create'])->name('create');
+            Route::delete('/{id}', [App\Http\Controllers\TournamentController::class, 'destroy'])->name('destroy');
             Route::post('/{id}/join', [App\Http\Controllers\TournamentController::class, 'join'])->name('join');
+            Route::post('/{id}/start', [App\Http\Controllers\TournamentController::class, 'start'])->name('start');
             Route::get('/{id}', [App\Http\Controllers\TournamentController::class, 'show'])->name('show');
         });
 

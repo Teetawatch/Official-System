@@ -58,6 +58,100 @@
         </div>
     </div>
 
+    <!-- Class Battle Layout -->
+    @if($tournament->type === 'class_battle')
+        <div class="card mb-8">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-list-ol text-primary-500 mr-2"></i>
+                        Live Leaderboard
+                    </h2>
+                    
+                    @if($tournament->status === 'ongoing')
+                        @php
+                            $myMatch = $tournament->matches->where('player1_id', Auth::id())->first();
+                        @endphp
+                        @if($myMatch)
+                            <a href="{{ route('typing.student.matches.show', $myMatch->id) }}" class="btn-primary animate-pulse">
+                                <i class="fas fa-gamepad mr-2"></i>
+                                เข้าห้องแข่งขัน
+                            </a>
+                        @endif
+                    @endif
+                </div>
+
+                <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">อันดับ</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ผู้เล่น</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ความเร็ว (WPM)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ความแม่นยำ</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @php
+                                $sortedMatches = $tournament->matches->sortByDesc('player1_wpm');
+                                $rank = 1;
+                            @endphp
+                            @forelse($sortedMatches as $match)
+                                <tr class="{{ Auth::id() === $match->player1_id ? 'bg-indigo-50' : '' }}">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        @if($rank == 1) <span class="text-xl">🥇</span>
+                                        @elseif($rank == 2) <span class="text-xl">🥈</span>
+                                        @elseif($rank == 3) <span class="text-xl">🥉</span>
+                                        @else #{{ $rank }}
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <img class="h-10 w-10 rounded-full object-cover" src="{{ $match->player1->avatar_url }}" alt="">
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">{{ $match->player1->name }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-bold text-gray-900">{{ $match->player1_wpm }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-500">{{ $match->player1_accuracy }}%</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @if($match->status === 'completed')
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                สำเร็จ
+                                            </span>
+                                        @elseif($match->status === 'ongoing')
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 animate-pulse">
+                                                กำลังพิมพ์
+                                            </span>
+                                        @else
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                รอเริ่ม
+                                            </span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @php $rank++; @endphp
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                        ยังไม่มีผู้เข้าร่วม
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @else
     <!-- Bracket Visualization -->
     <div class="card">
         <div class="p-6">
@@ -159,6 +253,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Participants List -->
     @if($tournament->participants->count() > 0)

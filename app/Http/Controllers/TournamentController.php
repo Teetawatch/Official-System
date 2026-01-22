@@ -20,18 +20,44 @@ class TournamentController extends Controller
         return view('typing.tournaments.index', compact('tournaments'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         // Simple create for testing/admin
         // In real app, this would be a form
+        // Check for type in request, default to bracket
+        $type = $request->input('type', 'bracket');
+        
+        $maxParticipants = 16;
+        $name = 'Weekly Speed Cubing #' . rand(1, 999);
+        $description = 'A bracket tournament for the fastest typists!';
+
+        if ($type === 'class_battle') {
+            $maxParticipants = 100; // Allow up to 100 or 50 as requested
+            $name = 'Classroom Battle Room #' . rand(1, 999);
+            $description = 'Compete with the entire class! Free for all.';
+        }
+
         $tournament = Tournament::create([
-            'name' => 'Weekly Speed Cubing #' . rand(1, 999),
-            'description' => 'A bracket tournament for the fastest typists!',
-            'max_participants' => 16,
+            'name' => $name,
+            'description' => $description,
+            'max_participants' => $maxParticipants,
             'status' => 'open',
+            'type' => $type,
         ]);
 
         return redirect()->route('typing.tournaments.index')->with('success', 'Tournament created!');
+    }
+
+    public function destroy($id)
+    {
+        $tournament = Tournament::findOrFail($id);
+        
+        // Delete related matches
+        $tournament->matches()->delete(); // Model might have cascading but good to be sure
+        $tournament->participants()->detach();
+        $tournament->delete();
+
+        return redirect()->route('typing.tournaments.index')->with('success', 'Tournament deleted successfully.');
     }
 
     public function join($id)
@@ -57,9 +83,27 @@ class TournamentController extends Controller
         // Auto-start if full?
         if ($tournament->participants()->count() >= $tournament->max_participants) {
             $this->startTournament($tournament);
+        } else if ($tournament->type === 'class_battle' && $this->isAdmin($user)) {
+             // Maybe manual start for class battle?
+             // For now let's keep it auto-start on full or add a "Start" button in UI
         }
 
         return redirect()->route('typing.tournaments.show', $tournament->id)->with('success', 'Joined successfully!');
+    }
+    
+    // Manual Start for Admins
+    public function start($id)
+    {
+        $tournament = Tournament::findOrFail($id);
+        if ($tournament->status !== 'open') return back();
+        
+        // Only admin/teacher check (assuming middleware handles or check here)
+         if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'teacher') {
+             return back()->with('error', 'Unauthorized');
+         }
+
+        $this->startTournament($tournament);
+        return back()->with('success', 'Tournament started!');
     }
 
     public function show($id)
@@ -79,7 +123,39 @@ class TournamentController extends Controller
             $tournament->start_date = now();
             $tournament->save();
 
+            // Removed early return for class_battle as it's handled below
+
             $participants = $tournament->participants()->inRandomOrder()->get();
+
+            // Assuming 16 playes for now
+            // Create Round 1 Matches
+            if ($tournament->type === 'class_battle') {
+                $status = 'ongoing'; 
+                // In Class Battle, we might want them to start immediately or wait for countdown.
+                // Let's set them to ongoing.
+                
+                // Get a random text for the whole class
+                $textData = $this->getRandomText(); 
+
+                foreach ($participants as $p) {
+                    TypingMatch::create([
+                        'tournament_id' => $tournament->id,
+                        'player1_id' => $p->id,
+                        'player2_id' => null, // Solo / Class Mode
+                        'round' => 1,
+                        'bracket_index' => 0,
+                        'status' => 'pending', // Pending so they can "Join" the room then we start sync? 
+                                               // Or just 'ongoing' and let them type? 
+                                               // User wants "Compete Together". Sync start is best.
+                        'language' => 'en', 
+                        'text_content' => $textData,
+                    ]);
+                }
+                
+                // For Class Battle, we rely on the specific Match controller logic 
+                // or we update the Tournament View to show a "Enter Race" button that redirects to their specific match.
+                return;
+            }
 
             // Assuming 16 playes for now
             // Create Round 1 Matches
@@ -137,5 +213,8 @@ class TournamentController extends Controller
             "A journey of a thousand miles begins with a single step."
         ];
         return $texts[array_rand($texts)];
+    }
+    private function isAdmin($user) {
+        return in_array($user->role, ['admin', 'teacher']);
     }
 }

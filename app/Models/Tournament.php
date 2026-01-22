@@ -16,6 +16,7 @@ class Tournament extends Model
         'start_date',
         'max_participants',
         'champion_id',
+        'type',
     ];
 
     protected $casts = [
