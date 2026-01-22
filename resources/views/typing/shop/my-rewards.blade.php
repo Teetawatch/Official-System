@@ -94,6 +94,18 @@
                         <i class="fas fa-crown"></i>
                         <span class="text-sm font-medium">{{ $titleItem ? $titleItem->name : 'ไม่มีตำแหน่ง' }}</span>
                     </div>
+
+                    @php $ncItem = $user->equipped_name_color_item; @endphp
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg {{ $ncItem ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500' }}">
+                        <i class="fas fa-signature"></i>
+                        <span class="text-sm font-medium">{{ $ncItem ? $ncItem->name : 'ไม่มีสีชื่อ' }}</span>
+                    </div>
+
+                    @php $pbgItem = $user->equipped_profile_bg_item; @endphp
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg {{ $pbgItem ? 'bg-cyan-100 text-cyan-700' : 'bg-gray-100 text-gray-500' }}">
+                        <i class="fas fa-id-card"></i>
+                        <span class="text-sm font-medium">{{ $pbgItem ? $pbgItem->name : 'ไม่มีการ์ด' }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,6 +117,8 @@
             'avatar_frame' => ['name' => 'กรอบอวาตาร์', 'icon' => 'fa-circle-user', 'color' => 'purple'],
             'theme' => ['name' => 'ธีมโปรไฟล์', 'icon' => 'fa-palette', 'color' => 'pink'],
             'title' => ['name' => 'ตำแหน่งพิเศษ', 'icon' => 'fa-crown', 'color' => 'amber'],
+            'name_color' => ['name' => 'สีชื่อ', 'icon' => 'fa-signature', 'color' => 'indigo'],
+            'profile_bg' => ['name' => 'พื้นหลังการ์ด', 'icon' => 'fa-id-card', 'color' => 'cyan'],
         ];
     @endphp
     
@@ -163,6 +177,18 @@
                                             <p class="px-3 py-1.5 rounded-full bg-gradient-to-r {{ $item->rarity_color }} text-white font-bold text-xs shadow-lg">
                                                 {{ $item->name }}
                                             </p>
+                                        </div>
+                                    @elseif($item->type === 'name_color')
+                                        <div class="text-center w-full">
+                                            <p class="text-lg font-bold {{ $item->data['class'] ?? 'text-gray-800' }}">ตัวอย่างชื่อ</p>
+                                            <p class="text-xs text-gray-400 mt-1">แสดงผลใน Leaderboard</p>
+                                        </div>
+                                    @elseif($item->type === 'profile_bg')
+                                        <div class="w-full h-20 rounded-xl {{ $item->data['class'] ?? 'bg-white' }} shadow-sm flex items-center justify-center border border-gray-100 p-2 relative overflow-hidden">
+                                            <div class="absolute inset-0 bg-white/10 skew-y-12"></div>
+                                            <div class="text-center relative z-10 p-2 bg-white/30 backdrop-blur-[1px] rounded-lg">
+                                                <i class="fas fa-user-circle text-2xl text-gray-800/50"></i>
+                                            </div>
                                         </div>
                                     @endif
                                 </div>

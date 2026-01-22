@@ -252,8 +252,80 @@ class RewardItemSeeder extends Seeder
             ],
         ];
 
+        // ==================== NAME COLORS ====================
+        $nameColors = [
+            [
+                'name' => 'สีแดงเพลิง',
+                'description' => 'ชื่อสีแดงร้อนแรง',
+                'type' => 'name_color',
+                'price' => 200,
+                'rarity' => 'common',
+                'data' => ['class' => 'text-red-500 font-bold'],
+            ],
+            [
+                'name' => 'สีทองอร่าม',
+                'description' => 'ชื่อสีทองดุจทองคำ',
+                'type' => 'name_color',
+                'price' => 500,
+                'rarity' => 'rare',
+                'data' => ['class' => 'text-amber-400 font-bold drop-shadow-sm'],
+            ],
+            [
+                'name' => 'สีรุ้ง',
+                'description' => 'ชื่อไล่เฉดสีรุ้งสุดเท่',
+                'type' => 'name_color',
+                'price' => 1000,
+                'rarity' => 'epic',
+                'data' => ['class' => 'bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 bg-clip-text text-transparent font-bold'],
+            ],
+            [
+                'name' => 'สีนีออนม่วง',
+                'description' => 'ชื่อเรืองแสงสีม่วง',
+                'type' => 'name_color',
+                'price' => 1200,
+                'rarity' => 'epic',
+                'data' => ['class' => 'text-purple-400 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)] font-bold'],
+            ],
+        ];
+
+        // ==================== PROFILE BACKGROUNDS ====================
+        $profileBgs = [
+            [
+                'name' => 'การ์ดคลาสสิก',
+                'description' => 'พื้นหลังการ์ดสีขาวสะอาดตา',
+                'type' => 'profile_bg',
+                'price' => 100,
+                'rarity' => 'common',
+                'data' => ['class' => 'bg-white'],
+            ],
+            [
+                'name' => 'การ์ดดาร์กโหมด',
+                'description' => 'พื้นหลังการ์ดสีเข้ม เท่ๆ',
+                'type' => 'profile_bg',
+                'price' => 200,
+                'rarity' => 'common',
+                'data' => ['class' => 'bg-slate-800 text-white'],
+            ],
+            [
+                'name' => 'การ์ดไซเบอร์พังค์',
+                'description' => 'พื้นหลังสไตล์อนาคต',
+                'type' => 'profile_bg',
+                'price' => 800,
+                'rarity' => 'epic',
+                'data' => ['class' => 'bg-slate-900 border border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.3)] text-cyan-50'],
+            ],
+            [
+                'name' => 'การ์ดทองคำ',
+                'description' => 'พื้นหลังสีทองหรูหรา',
+                'type' => 'profile_bg',
+                'price' => 2500,
+                'rarity' => 'legendary',
+                'data' => ['class' => 'bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-100 border-2 border-amber-400 text-amber-900'],
+            ],
+        ];
+
         // Insert all items
-        foreach (array_merge($avatarFrames, $themes, $titles) as $item) {
+        foreach (array_merge($avatarFrames, $themes, $titles, $nameColors, $profileBgs) as $item) {
             RewardItem::updateOrCreate(
                 ['name' => $item['name'], 'type' => $item['type']],
                 $item
@@ -263,6 +335,8 @@ class RewardItemSeeder extends Seeder
         $this->command->info('✅ Seeded ' . count($avatarFrames) . ' avatar frames');
         $this->command->info('✅ Seeded ' . count($themes) . ' themes');
         $this->command->info('✅ Seeded ' . count($titles) . ' titles');
-        $this->command->info('🎉 Total: ' . (count($avatarFrames) + count($themes) + count($titles)) . ' reward items');
+        $this->command->info('✅ Seeded ' . count($nameColors) . ' name colors');
+        $this->command->info('✅ Seeded ' . count($profileBgs) . ' profile backgrounds');
+        $this->command->info('🎉 Total: ' . (count($avatarFrames) + count($themes) + count($titles) + count($nameColors) + count($profileBgs)) . ' reward items');
     }
 }

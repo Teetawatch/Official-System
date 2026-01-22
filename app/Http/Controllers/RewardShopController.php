@@ -35,6 +35,8 @@ class RewardShopController extends Controller
             'avatar_frames' => RewardItem::active()->ofType('avatar_frame')->count(),
             'themes' => RewardItem::active()->ofType('theme')->count(),
             'titles' => RewardItem::active()->ofType('title')->count(),
+            'name_colors' => RewardItem::active()->ofType('name_color')->count(),
+            'profile_bgs' => RewardItem::active()->ofType('profile_bg')->count(),
             'owned' => count($ownedItemIds),
         ];
 
@@ -113,6 +115,8 @@ class RewardShopController extends Controller
             'avatar_frame' => $rewards->filter(fn($r) => $r->rewardItem->type === 'avatar_frame'),
             'theme' => $rewards->filter(fn($r) => $r->rewardItem->type === 'theme'),
             'title' => $rewards->filter(fn($r) => $r->rewardItem->type === 'title'),
+            'name_color' => $rewards->filter(fn($r) => $r->rewardItem->type === 'name_color'),
+            'profile_bg' => $rewards->filter(fn($r) => $r->rewardItem->type === 'profile_bg'),
         ];
 
         // Get currently equipped items
@@ -120,6 +124,8 @@ class RewardShopController extends Controller
             'frame' => $user->equipped_frame,
             'theme' => $user->equipped_theme,
             'title' => $user->equipped_title,
+            'name_color' => $user->equipped_name_color,
+            'profile_bg' => $user->equipped_profile_bg,
         ];
 
         return view('typing.shop.my-rewards', compact('rewards', 'grouped', 'user', 'equipped'));
@@ -160,6 +166,12 @@ class RewardShopController extends Controller
             case 'title':
                 $user->equipped_title = $item->id;
                 break;
+            case 'name_color':
+                $user->equipped_name_color = $item->id;
+                break;
+            case 'profile_bg':
+                $user->equipped_profile_bg = $item->id;
+                break;
         }
         $user->save();
 
@@ -195,6 +207,12 @@ class RewardShopController extends Controller
                 break;
             case 'title':
                 $user->equipped_title = null;
+                break;
+            case 'name_color':
+                $user->equipped_name_color = null;
+                break;
+            case 'profile_bg':
+                $user->equipped_profile_bg = null;
                 break;
         }
         $user->save();

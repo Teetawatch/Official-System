@@ -38,21 +38,24 @@
             <!-- 2nd Place -->
             @if(isset($top3[1]))
             @php
-                $frame2 = null;
-                $title2 = null;
-                if ($rewardSystemAvailable) {
-                    try {
-                        $equippedFrame2 = data_get($top3[1], 'equipped_frame');
-                        $equippedTitle2 = data_get($top3[1], 'equipped_title');
-                        $frame2 = $equippedFrame2 ? \App\Models\RewardItem::find($equippedFrame2) : null;
-                        $title2 = $equippedTitle2 ? \App\Models\RewardItem::find($equippedTitle2) : null;
-                    } catch (\Exception $e) {
-                        $frame2 = null;
-                        $title2 = null;
-                    }
-                }
+                $user2 = $top3[1];
+                $frame2 = $user2->equippedFrame;
+                $title2 = $user2->equippedTitle;
+                $theme2 = $user2->equippedTheme;
+                
                 $frameData2 = optional($frame2)->data ?? [];
                 $frameGradient2 = $frameData2['gradient'] ?? 'from-gray-300 to-gray-500';
+                
+                $themeData2 = optional($theme2)->data ?? [];
+                $cardGradient2 = $themeData2['gradient'] ?? 'from-gray-300 to-gray-400';
+
+                $nameColor2 = $user2->equippedNameColor;
+                $pBg2 = $user2->equippedProfileBg;
+                
+                $ncClass2 = $nameColor2 ? ($nameColor2->data['class'] ?? '') : '';
+                $bgClass2 = $pBg2 ? ($pBg2->data['class'] ?? '') : "bg-gradient-to-b $cardGradient2 text-white";
+                // Ensure text color if pBg is common (white)
+                if($pBg2 && str_contains($bgClass2, 'bg-white')) $bgClass2 .= ' text-gray-900';
             @endphp
             <div class="relative z-10 -mr-4 md:-mr-8 group cursor-pointer order-1">
                 <div class="flex flex-col items-center transition-transform transform group-hover:-translate-y-2 duration-300">
@@ -69,7 +72,7 @@
                             #2
                         </div>
                     </div>
-                    <div class="w-28 md:w-36 bg-gradient-to-b from-gray-300 to-gray-400 rounded-t-xl p-4 text-center text-white shadow-lg h-36 md:h-44 flex flex-col justify-start pt-8 relative overflow-hidden backdrop-blur-sm">
+                    <div class="w-28 md:w-36 {{ $bgClass2 }} rounded-t-xl p-4 text-center shadow-lg h-36 md:h-44 flex flex-col justify-start pt-8 relative overflow-hidden backdrop-blur-sm">
                         <div class="absolute inset-0 bg-white/20 skew-y-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         @if($title2)
                             @php $titleData2 = optional($title2)->data ?? []; @endphp
@@ -78,7 +81,7 @@
                                 <span>{{ optional($title2)->name ?? '' }}</span>
                             </div>
                         @endif
-                        <p class="font-bold text-sm md:text-base truncate relative z-10">{{ $top3[1]->name }}</p>
+                        <p class="font-bold text-sm md:text-base truncate relative z-10 {{ $ncClass2 }}">{{ $top3[1]->name }}</p>
                         <p class="text-xs opacity-90 relative z-10 mt-1">{{ number_format($top3[1]->typing_submissions_sum_score ?? 0) }} คะแนน</p>
                     </div>
                 </div>
@@ -88,21 +91,23 @@
             <!-- 1st Place -->
             @if(isset($top3[0]))
             @php
-                $frame1 = null;
-                $title1 = null;
-                if ($rewardSystemAvailable) {
-                    try {
-                        $equippedFrame1 = data_get($top3[0], 'equipped_frame');
-                        $equippedTitle1 = data_get($top3[0], 'equipped_title');
-                        $frame1 = $equippedFrame1 ? \App\Models\RewardItem::find($equippedFrame1) : null;
-                        $title1 = $equippedTitle1 ? \App\Models\RewardItem::find($equippedTitle1) : null;
-                    } catch (\Exception $e) {
-                        $frame1 = null;
-                        $title1 = null;
-                    }
-                }
+                $user1 = $top3[0];
+                $frame1 = $user1->equippedFrame;
+                $title1 = $user1->equippedTitle;
+                $theme1 = $user1->equippedTheme;
+                
                 $frameData1 = optional($frame1)->data ?? [];
                 $frameGradient1 = $frameData1['gradient'] ?? 'from-yellow-300 to-amber-500';
+                
+                $themeData1 = optional($theme1)->data ?? [];
+                $cardGradient1 = $themeData1['gradient'] ?? 'from-yellow-400 to-amber-500';
+
+                $nameColor1 = $user1->equippedNameColor;
+                $pBg1 = $user1->equippedProfileBg;
+                
+                $ncClass1 = $nameColor1 ? ($nameColor1->data['class'] ?? '') : '';
+                $bgClass1 = $pBg1 ? ($pBg1->data['class'] ?? '') : "bg-gradient-to-b $cardGradient1 text-white";
+                if($pBg1 && str_contains($bgClass1, 'bg-white')) $bgClass1 .= ' text-gray-900';
             @endphp
             <div class="relative z-20 group cursor-pointer order-2 -mt-12">
                 <div class="flex flex-col items-center transition-transform transform group-hover:-translate-y-2 duration-300">
@@ -120,7 +125,7 @@
                             #1
                         </div>
                     </div>
-                    <div class="w-32 md:w-44 bg-gradient-to-b from-yellow-400 to-amber-500 rounded-t-2xl p-4 text-center text-white shadow-xl h-48 md:h-56 flex flex-col justify-start pt-8 relative overflow-hidden">
+                    <div class="w-32 md:w-44 {{ $bgClass1 }} rounded-t-2xl p-4 text-center shadow-xl h-48 md:h-56 flex flex-col justify-start pt-8 relative overflow-hidden">
                         <div class="absolute inset-0 bg-white/20 skew-y-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="relative z-10">
                             @if($title1)
@@ -130,7 +135,7 @@
                                     <span>{{ optional($title1)->name ?? '' }}</span>
                                 </div>
                             @endif
-                            <p class="font-bold text-base md:text-lg truncate">{{ $top3[0]->name }}</p>
+                            <p class="font-bold text-base md:text-lg truncate {{ $ncClass1 }}">{{ $top3[0]->name }}</p>
                             <div class="inline-block bg-white/20 rounded-lg px-2 py-1 mt-2">
                                 <p class="text-sm font-bold flex items-center gap-1">
                                     <i class="fas fa-bolt text-yellow-200"></i>
@@ -147,21 +152,23 @@
             <!-- 3rd Place -->
             @if(isset($top3[2]))
             @php
-                $frame3 = null;
-                $title3 = null;
-                if ($rewardSystemAvailable) {
-                    try {
-                        $equippedFrame3 = data_get($top3[2], 'equipped_frame');
-                        $equippedTitle3 = data_get($top3[2], 'equipped_title');
-                        $frame3 = $equippedFrame3 ? \App\Models\RewardItem::find($equippedFrame3) : null;
-                        $title3 = $equippedTitle3 ? \App\Models\RewardItem::find($equippedTitle3) : null;
-                    } catch (\Exception $e) {
-                        $frame3 = null;
-                        $title3 = null;
-                    }
-                }
+                $user3 = $top3[2];
+                $frame3 = $user3->equippedFrame;
+                $title3 = $user3->equippedTitle;
+                $theme3 = $user3->equippedTheme;
+                
                 $frameData3 = optional($frame3)->data ?? [];
                 $frameGradient3 = $frameData3['gradient'] ?? 'from-amber-600 to-orange-700';
+                
+                $themeData3 = optional($theme3)->data ?? [];
+                $cardGradient3 = $themeData3['gradient'] ?? 'from-amber-600 to-orange-700';
+
+                $nameColor3 = $user3->equippedNameColor;
+                $pBg3 = $user3->equippedProfileBg;
+                
+                $ncClass3 = $nameColor3 ? ($nameColor3->data['class'] ?? '') : '';
+                $bgClass3 = $pBg3 ? ($pBg3->data['class'] ?? '') : "bg-gradient-to-b $cardGradient3 text-white";
+                if($pBg3 && str_contains($bgClass3, 'bg-white')) $bgClass3 .= ' text-gray-900';
             @endphp
             <div class="relative z-10 -ml-4 md:-ml-8 group cursor-pointer order-3">
                 <div class="flex flex-col items-center transition-transform transform group-hover:-translate-y-2 duration-300">
@@ -178,7 +185,7 @@
                             #3
                         </div>
                     </div>
-                    <div class="w-28 md:w-36 bg-gradient-to-b from-amber-600 to-orange-700 rounded-t-xl p-4 text-center text-white shadow-lg h-32 md:h-40 flex flex-col justify-start pt-6 relative overflow-hidden">
+                    <div class="w-28 md:w-36 {{ $bgClass3 }} rounded-t-xl p-4 text-center shadow-lg h-32 md:h-40 flex flex-col justify-start pt-6 relative overflow-hidden">
                         <div class="absolute inset-0 bg-white/20 skew-y-12 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         @if($title3)
                             @php $titleData3 = optional($title3)->data ?? []; @endphp
@@ -187,7 +194,7 @@
                                 <span>{{ optional($title3)->name ?? '' }}</span>
                             </div>
                         @endif
-                        <p class="font-bold text-sm md:text-base truncate relative z-10">{{ $top3[2]->name }}</p>
+                        <p class="font-bold text-sm md:text-base truncate relative z-10 {{ $ncClass3 }}">{{ $top3[2]->name }}</p>
                         <p class="text-xs opacity-90 relative z-10 mt-1">{{ number_format($top3[2]->typing_submissions_sum_score ?? 0) }} คะแนน</p>
                     </div>
                 </div>
@@ -277,21 +284,16 @@
                         </td>
                         <td class="py-4 px-4">
                             @php
-                                $studentFrame = null;
-                                $studentTitle = null;
-                                if ($rewardSystemAvailable) {
-                                    try {
-                                        $studentEquippedFrame = data_get($student, 'equipped_frame');
-                                        $studentEquippedTitle = data_get($student, 'equipped_title');
-                                        $studentFrame = $studentEquippedFrame ? \App\Models\RewardItem::find($studentEquippedFrame) : null;
-                                        $studentTitle = $studentEquippedTitle ? \App\Models\RewardItem::find($studentEquippedTitle) : null;
-                                    } catch (\Exception $e) {
-                                        $studentFrame = null;
-                                        $studentTitle = null;
-                                    }
-                                }
+                                $studentFrame = $student->equippedFrame;
+                                $studentTitle = $student->equippedTitle;
+                                // We can also use theme for table row styling if needed
+                                // $studentTheme = $student->equippedTheme;
+
                                 $studentFrameData = optional($studentFrame)->data ?? [];
                                 $studentFrameGradient = $studentFrameData['gradient'] ?? null;
+                                
+                                $studentNameColor = $student->equippedNameColor;
+                                $ncClass = $studentNameColor ? ($studentNameColor->data['class'] ?? '') : 'text-gray-800 group-hover:text-blue-600';
                             @endphp
                             <div class="flex items-center gap-4">
                                 <div class="relative">
@@ -323,7 +325,7 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <p class="font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                                        <p class="font-bold {{ $ncClass }} transition-colors">
                                             {{ $student->name }}
                                         </p>
                                         @if($studentTitle)

@@ -31,16 +31,24 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- Profile Card -->
-        <div class="card text-center">
-            @php
-                $frameItem = $user->equipped_frame_item;
-                $titleItem = $user->equipped_title_item;
-                $themeItem = $user->equipped_theme_item;
-                $frameGradient = $frameItem && isset($frameItem->data['gradient']) 
-                    ? $frameItem->data['gradient'] 
-                    : 'from-gray-300 to-gray-400';
-            @endphp
+        @php
+            $frameItem = $user->equipped_frame_item;
+            $titleItem = $user->equipped_title_item;
+            $themeItem = $user->equipped_theme_item;
+            $frameGradient = $frameItem && isset($frameItem->data['gradient']) 
+                ? $frameItem->data['gradient'] 
+                : 'from-gray-300 to-gray-400';
             
+            $nameColorItem = $user->equipped_name_color_item;
+            $profileBgItem = $user->equipped_profile_bg_item;
+            
+            $nameColorClass = $nameColorItem ? ($nameColorItem->data['class'] ?? '') : 'text-gray-800';
+            
+            // Card background
+            $profileBgClass = $profileBgItem ? ($profileBgItem->data['class'] ?? '') : 'bg-white';
+        @endphp
+        
+        <div class="card text-center {{ $profileBgClass }}">
             <div class="mb-6 relative flex flex-col items-center">
                 {{-- Avatar with Frame --}}
                 <div class="relative">
@@ -86,7 +94,7 @@
             </form>
             <p class="text-xs text-gray-400 mb-4">คลิกไอคอนกล้องเพื่อเปลี่ยนรูป</p>
             
-            <h2 class="text-xl font-bold text-gray-800">{{ $user->name }}</h2>
+            <h2 class="text-xl font-bold {{ $nameColorClass }}">{{ $user->name }}</h2>
             <p class="text-gray-500">{{ $user->email }}</p>
             <div class="flex justify-center gap-2 mt-4">
                 <span class="badge-{{ $user->role === 'admin' ? 'danger' : 'primary' }}">
@@ -124,6 +132,17 @@
                         <i class="fas fa-crown"></i>
                         <span>{{ $titleItem ? Str::limit($titleItem->name, 10) : 'ไม่มีตำแหน่ง' }}</span>
                     </div>
+                </div>
+                <div class="flex flex-wrap gap-2 justify-center mt-2">
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg {{ $nameColorItem ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400' }} text-xs">
+                        <i class="fas fa-signature"></i>
+                        <span>{{ $nameColorItem ? Str::limit($nameColorItem->name, 10) : 'ไม่มีสีชื่อ' }}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg {{ $profileBgItem ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400' }} text-xs">
+                        <i class="fas fa-id-card"></i>
+                        <span>{{ $profileBgItem ? Str::limit($profileBgItem->name, 10) : 'ไม่มีการ์ด' }}</span>
+                    </div>
+                </div>
                 </div>
                 <div class="mt-3 flex gap-2 justify-center">
                     <a href="{{ route('typing.shop.my-rewards') }}" class="text-xs text-primary-600 hover:text-primary-700 font-medium">

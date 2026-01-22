@@ -32,6 +32,8 @@ class User extends Authenticatable
         'equipped_frame',
         'equipped_theme',
         'equipped_title',
+        'equipped_name_color',
+        'equipped_profile_bg',
     ];
 
     public function typingSubmissions()
@@ -55,6 +57,30 @@ class User extends Authenticatable
     public function userRewards()
     {
         return $this->hasMany(UserReward::class);
+    }
+
+    /**
+     * Get equipped frame (Relationship)
+     */
+    public function equippedFrame()
+    {
+        return $this->belongsTo(RewardItem::class, 'equipped_frame');
+    }
+
+    /**
+     * Get equipped theme (Relationship)
+     */
+    public function equippedTheme()
+    {
+        return $this->belongsTo(RewardItem::class, 'equipped_theme');
+    }
+
+    /**
+     * Get equipped title (Relationship)
+     */
+    public function equippedTitle()
+    {
+        return $this->belongsTo(RewardItem::class, 'equipped_title');
     }
 
     /**
@@ -86,6 +112,44 @@ class User extends Authenticatable
     {
         if ($this->equipped_title) {
             return RewardItem::find($this->equipped_title);
+        }
+        return null;
+    }
+
+    /**
+     * Get equipped name color (Relationship)
+     */
+    public function equippedNameColor()
+    {
+        return $this->belongsTo(RewardItem::class, 'equipped_name_color');
+    }
+
+    /**
+     * Get equipped profile background (Relationship)
+     */
+    public function equippedProfileBg()
+    {
+        return $this->belongsTo(RewardItem::class, 'equipped_profile_bg');
+    }
+
+    /**
+     * Get equipped name color item
+     */
+    public function getEquippedNameColorItemAttribute()
+    {
+        if ($this->equipped_name_color) {
+            return RewardItem::find($this->equipped_name_color);
+        }
+        return null;
+    }
+
+    /**
+     * Get equipped profile background item
+     */
+    public function getEquippedProfileBgItemAttribute()
+    {
+        if ($this->equipped_profile_bg) {
+            return RewardItem::find($this->equipped_profile_bg);
         }
         return null;
     }

@@ -327,7 +327,8 @@ class TypingController extends Controller
         // Build query with filters
         $query = User::where('role', 'student')
             ->withSum('typingSubmissions', 'score')
-            ->withCount('typingSubmissions');
+            ->withCount('typingSubmissions')
+            ->with(['equippedFrame', 'equippedTheme', 'equippedTitle']);
         
         // Search filter
         $search = $request->input('search');
@@ -351,6 +352,7 @@ class TypingController extends Controller
         // Get top 3 for podium (always unfiltered)
         $top3 = User::where('role', 'student')
             ->withSum('typingSubmissions', 'score')
+            ->with(['equippedFrame', 'equippedTheme', 'equippedTitle'])
             ->orderByDesc('typing_submissions_sum_score')
             ->take(3)
             ->get();
