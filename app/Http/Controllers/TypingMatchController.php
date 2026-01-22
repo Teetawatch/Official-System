@@ -226,10 +226,6 @@ class TypingMatchController extends Controller
                 $match->completed_at = now();
                 $match->save();
 
-                // Award points
-                $user->increment('points', 50); // Winner gets 50 points
-                $user->increment('match_wins', 1);
-
                 // Check if this is a personal best WPM
                 if ($finalWpm > ($user->best_match_wpm ?? 0)) {
                     $user->best_match_wpm = $finalWpm;
@@ -237,12 +233,58 @@ class TypingMatchController extends Controller
                     $isNewRecord = true;
                 }
 
-                // Loser gets 10 points for participation
-                $loserId = ($match->player1_id === $user->id) ? $match->player2_id : $match->player1_id;
-                if ($loserId) {
-                    $loser = User::find($loserId);
-                    $loser->increment('points', 10);
-                    $loser->increment('match_losses', 1);
+                // Check for Class Battle Mode
+                if ($match->tournament_id && $match->tournament->type === 'class_battle') {
+                    // Calculate Rank
+                    $completedCount = TypingMatch::where('tournament_id', $match->tournament_id)
+                        ->where('status', 'completed')
+                        ->where('id', '!=', $match->id) // Exclude self just in case (though we locked row, status was likely pending)
+                        ->count();
+                    
+                    $rank = $completedCount + 1;
+                    
+                    // Calculate Points from Tournament Config
+                    $config = $match->tournament->scoring_config ?? [
+                        'first_place' => 100,
+                        'second_place' => 90,
+                        'third_place' => 80,
+                        'decrement' => 2,
+                        'min_points' => 10
+                    ];
+                    
+                    // Decode if it's a string (DB might return string for json column depending on driver/cast)
+                    if (is_string($config)) $config = json_decode($config, true);
+
+                    $points = 0;
+                    if ($rank === 1) $points = intval($config['first_place'] ?? 100);
+                    else if ($rank === 2) $points = intval($config['second_place'] ?? 90);
+                    else if ($rank === 3) $points = intval($config['third_place'] ?? 80);
+                    else {
+                        $base = intval($config['third_place'] ?? 80);
+                        $decr = intval($config['decrement'] ?? 2);
+                        $min = intval($config['min_points'] ?? 10);
+                        $points = max($min, $base - (($rank - 3) * $decr));
+                    }
+                    
+                    $user->increment('points', $points);
+                    $user->increment('match_wins', 1); // Maybe count as win? Or just participate? Let's count as win for now or maybe distinct stat.
+                    
+                    // Save rank to match for reference (optional, but good for display)
+                    // We don't have a specific rank column on match, but we can infer it later from finished_at order 
+                    // OR we can misuse 'bracket_index' or add a new column. 
+                    // For now, let's just award points.
+                } else {
+                    // Standard 1v1 Points
+                    $user->increment('points', 50); // Winner gets 50 points
+                    $user->increment('match_wins', 1);
+                    
+                    // Loser gets 10 points for participation
+                    $loserId = ($match->player1_id === $user->id) ? $match->player2_id : $match->player1_id;
+                    if ($loserId) {
+                        $loser = User::find($loserId);
+                        $loser->increment('points', 10);
+                        $loser->increment('match_losses', 1);
+                    }
                 }
 
                 // Tournament Advancement Logic

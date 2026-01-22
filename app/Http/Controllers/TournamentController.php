@@ -20,21 +20,40 @@ class TournamentController extends Controller
         return view('typing.tournaments.index', compact('tournaments'));
     }
 
-    public function create(Request $request)
+    public function create()
     {
-        // Simple create for testing/admin
-        // In real app, this would be a form
-        // Check for type in request, default to bracket
-        $type = $request->input('type', 'bracket');
-        
-        $maxParticipants = 16;
-        $name = 'Weekly Speed Cubing #' . rand(1, 999);
-        $description = 'A bracket tournament for the fastest typists!';
+        return view('typing.tournaments.create');
+    }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'type' => 'required|in:bracket,class_battle',
+            'max_participants' => 'required|integer|min:2',
+        ]);
+
+        $type = $request->input('type');
+        $name = $request->input('name');
+        $description = $request->input('description');
+        $maxParticipants = $request->input('max_participants');
+
+        $scoringConfig = null;
         if ($type === 'class_battle') {
-            $maxParticipants = 100; // Allow up to 100 or 50 as requested
-            $name = 'Classroom Battle Room #' . rand(1, 999);
-            $description = 'Compete with the entire class! Free for all.';
+            // Default Scoring Configuration
+            $scoringConfig = [
+                'first_place' => 100,
+                'second_place' => 90,
+                'third_place' => 80,
+                'decrement' => 2,
+                'min_points' => 10
+            ];
+            
+            // Allow override from request
+            if ($request->has('scoring_config')) {
+                $scoringConfig = $request->input('scoring_config');
+            }
         }
 
         $tournament = Tournament::create([
@@ -43,6 +62,7 @@ class TournamentController extends Controller
             'max_participants' => $maxParticipants,
             'status' => 'open',
             'type' => $type,
+            'scoring_config' => $scoringConfig,
         ]);
 
         return redirect()->route('typing.tournaments.index')->with('success', 'Tournament created!');

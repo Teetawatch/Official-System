@@ -17,10 +17,12 @@ class Tournament extends Model
         'max_participants',
         'champion_id',
         'type',
+        'scoring_config',
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
+        'scoring_config' => 'array',
     ];
 
     public function participants()
