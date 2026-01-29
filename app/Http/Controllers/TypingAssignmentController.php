@@ -61,8 +61,15 @@ class TypingAssignmentController extends Controller
         if ($request->hasFile('master_file')) {
             $file = $request->file('master_file');
             $filename = 'master_' . time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('master_files', $filename, 'public');
-            $validated['master_file_path'] = 'storage/' . $path;
+
+            // Create directory if not exists
+            $uploadPath = public_path('storage/master_files');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $file->move($uploadPath, $filename);
+            $validated['master_file_path'] = 'storage/master_files/' . $filename;
             $validated['master_file_name'] = $file->getClientOriginalName();
         }
 
@@ -129,8 +136,15 @@ class TypingAssignmentController extends Controller
 
             $file = $request->file('master_file');
             $filename = 'master_' . time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('master_files', $filename, 'public');
-            $validated['master_file_path'] = 'storage/' . $path;
+
+            // Create directory if not exists
+            $uploadPath = public_path('storage/master_files');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            $file->move($uploadPath, $filename);
+            $validated['master_file_path'] = 'storage/master_files/' . $filename;
             $validated['master_file_name'] = $file->getClientOriginalName();
         }
 

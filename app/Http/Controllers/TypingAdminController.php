@@ -18,22 +18,22 @@ class TypingAdminController extends Controller
         $pendingSubmissions = TypingSubmission::whereNull('score')->count();
         $averageScore = TypingSubmission::whereNotNull('score')->avg('score') ?? 0;
         $closedAssignments = TypingAssignment::where('is_active', false)->count();
-        
+
         // Get recent submissions for the table
         $recentSubmissions = TypingSubmission::with(['user', 'assignment'])
             ->latest()
             ->take(5)
             ->get();
-        
+
         // Get assignments for status section
         $assignments = TypingAssignment::withCount('submissions')
             ->latest()
             ->take(3)
             ->get();
-        
+
         return view('typing.admin.dashboard', compact(
-            'totalStudents', 
-            'totalAssignments', 
+            'totalStudents',
+            'totalAssignments',
             'totalSubmissions',
             'pendingSubmissions',
             'averageScore',
@@ -46,28 +46,30 @@ class TypingAdminController extends Controller
     public function students(Request $request)
     {
         $query = User::where('role', 'student');
-        
+
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('student_id', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('student_id', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
-        
+
         if ($request->filled('class')) {
             $query->where('class_name', $request->class);
         }
 
         $students = $query->withCount('typingSubmissions')
-            ->with(['typingSubmissions' => function($q) {
-                $q->whereNotNull('score')->select('user_id', 'score');
-            }])
+            ->with([
+                'typingSubmissions' => function ($q) {
+                    $q->whereNotNull('score')->select('user_id', 'score');
+                }
+            ])
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
-        
+
         // Get all unique class names from the database (sorted)
         $classes = User::where('role', 'student')
             ->whereNotNull('class_name')
@@ -75,7 +77,7 @@ class TypingAdminController extends Controller
             ->distinct()
             ->orderBy('class_name')
             ->pluck('class_name');
-            
+
         return view('typing.admin.students', compact('students', 'classes'));
     }
 
@@ -88,9 +90,9 @@ class TypingAdminController extends Controller
         // Search Filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('user', function($q) use ($search) {
+            $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('student_id', 'like', "%{$search}%");
+                    ->orWhere('student_id', 'like', "%{$search}%");
             });
         }
 
@@ -127,70 +129,123 @@ class TypingAdminController extends Controller
         } else {
             $query->latest();
         }
-        
+
         $submissions = $query->paginate(20)->withQueryString();
-        
+
         // Stats for the view
         $totalSubmissions = TypingSubmission::count();
         $pendingSubmissions = TypingSubmission::whereNull('score')->count();
         $gradedSubmissions = TypingSubmission::whereNotNull('score')->count();
         $averageScore = TypingSubmission::whereNotNull('score')->avg('score') ?? 0;
-        
+
         // Get assignments for filter dropdown
         $allAssignments = TypingAssignment::select('id', 'title')->get();
-            
+
         return view('typing.admin.submissions', compact(
             'submissions',
             'totalSubmissions',
-            'pendingSubmissions', 
+            'pendingSubmissions',
             'gradedSubmissions',
             'averageScore',
             'allAssignments'
         ));
     }
 
-    public function grades()
+    public function grades(Request $request)
     {
+        $query = User::where('role', 'student')
+            ->withSum([
+                'typingSubmissions as total_score' => function ($q) {
+                    $q->whereNotNull('score');
+                }
+            ], 'score');
+
+        // Search Filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('student_id', 'like', "%{$search}%");
+            });
+        }
+
+        // Class Filter
+        if ($request->filled('class')) {
+            $query->where('class_name', $request->class);
+        }
+
+        // Sorting
+        $sort = $request->input('sort', 'total_desc');
+        switch ($sort) {
+            case 'total_desc':
+                $query->orderByDesc('total_score');
+                break;
+            case 'total_asc':
+                $query->orderBy('total_score', 'asc');
+                break;
+            case 'name':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'id':
+                $query->orderBy('student_id', 'asc');
+                break;
+            default:
+                $query->orderByDesc('total_score');
+                break;
+        }
+
         // Get students with their submissions
-        $students = User::where('role', 'student')
-            ->with(['typingSubmissions' => function($q) {
+        $students = $query->with([
+            'typingSubmissions' => function ($q) {
                 $q->with('assignment')->whereNotNull('score')->latest();
-            }])
-            ->paginate(20);
-        
-        // Calculate summary stats
+            }
+        ])
+            ->paginate(50) // Increased per page for grades view
+            ->withQueryString();
+
+        // Calculate summary stats (unfiltered or filtered? Usually unfiltered for summary)
         $totalStudents = User::where('role', 'student')->count();
         $allScores = TypingSubmission::whereNotNull('score')->pluck('score');
         $averageScore = $allScores->avg() ?? 0;
         $maxScore = $allScores->max() ?? 0;
         $minScore = $allScores->min() ?? 0;
-        
+
         // Get assignments for columns
         $assignments = TypingAssignment::select('id', 'title', 'max_score')
             ->orderBy('created_at')
             ->get();
-        
+
+        // Get all unique class names for the filter
+        $classes = User::where('role', 'student')
+            ->whereNotNull('class_name')
+            ->where('class_name', '!=', '')
+            ->distinct()
+            ->orderBy('class_name')
+            ->pluck('class_name');
+
         // Calculate passing rate (passing = avg score >= 50%)
         $passingStudents = User::where('role', 'student')
-            ->whereHas('typingSubmissions', function($q) {
+            ->whereHas('typingSubmissions', function ($q) {
                 $q->whereNotNull('score');
             })
             ->withAvg('typingSubmissions', 'score')
             ->get()
-            ->filter(function($student) {
+            ->filter(function ($student) {
                 return ($student->typing_submissions_avg_score ?? 0) >= 50;
             })
             ->count();
+
         $passingRate = $totalStudents > 0 ? round(($passingStudents / $totalStudents) * 100) : 0;
-            
+
         return view('typing.admin.grades', compact(
             'students',
             'totalStudents',
-            'averageScore', 
+            'averageScore',
             'maxScore',
             'minScore',
             'passingRate',
-            'assignments'
+            'assignments',
+            'classes'
         ));
     }
 
@@ -206,7 +261,7 @@ class TypingAdminController extends Controller
             'score' => $validated['score'],
             'feedback' => $validated['feedback']
         ]);
-        
+
         // Notify Student
         if ($submission->user) {
             $submission->user->notify(new \App\Notifications\AssignmentGraded($submission));
@@ -260,7 +315,7 @@ class TypingAdminController extends Controller
     public function updateStudent(Request $request, $id)
     {
         $student = User::where('role', 'student')->findOrFail($id);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
@@ -301,25 +356,27 @@ class TypingAdminController extends Controller
     public function exportGradesCsv()
     {
         $students = User::where('role', 'student')
-            ->with(['typingSubmissions' => function($q) {
-                $q->with('assignment')->whereNotNull('score');
-            }])
+            ->with([
+                'typingSubmissions' => function ($q) {
+                    $q->with('assignment')->whereNotNull('score');
+                }
+            ])
             ->orderBy('name')
             ->get();
-        
+
         $assignments = TypingAssignment::select('id', 'title')->orderBy('created_at')->get();
-        
+
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="grades_' . date('Y-m-d') . '.csv"',
         ];
-        
-        $callback = function() use ($students, $assignments) {
+
+        $callback = function () use ($students, $assignments) {
             $file = fopen('php://output', 'w');
-            
+
             // Add BOM for Excel UTF-8 support
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
             // Header row
             $header = ['ลำดับ', 'รหัสนักเรียน', 'ชื่อ-นามสกุล', 'ห้อง'];
             foreach ($assignments as $assignment) {
@@ -328,7 +385,7 @@ class TypingAdminController extends Controller
             $header[] = 'คะแนนรวม';
             $header[] = 'คะแนนเฉลี่ย';
             fputcsv($file, $header);
-            
+
             // Data rows
             $rowNum = 1;
             foreach ($students as $student) {
@@ -338,30 +395,30 @@ class TypingAdminController extends Controller
                     $student->name,
                     $student->class_name ?? '-',
                 ];
-                
+
                 $totalScore = 0;
                 $scoreCount = 0;
-                
+
                 foreach ($assignments as $assignment) {
                     $submission = $student->typingSubmissions->firstWhere('assignment_id', $assignment->id);
                     $score = $submission ? $submission->score : '-';
                     $row[] = $score;
-                    
+
                     if ($submission && $submission->score !== null) {
                         $totalScore += $submission->score;
                         $scoreCount++;
                     }
                 }
-                
+
                 $row[] = $totalScore;
                 $row[] = $scoreCount > 0 ? round($totalScore / $scoreCount, 2) : '-';
-                
+
                 fputcsv($file, $row);
             }
-            
+
             fclose($file);
         };
-        
+
         return response()->stream($callback, 200, $headers);
     }
 
@@ -387,7 +444,7 @@ class TypingAdminController extends Controller
 
         $zipFileName = 'submission_files_' . $assignmentId . '_' . date('Ymd_His') . '.zip';
         $zipPath = public_path('downloads/' . $zipFileName);
-        
+
         // Ensure directory exists
         if (!file_exists(public_path('downloads'))) {
             mkdir(public_path('downloads'), 0755, true);
@@ -396,27 +453,27 @@ class TypingAdminController extends Controller
         $zip = new \ZipArchive;
         if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
             $addedFiles = [];
-            
+
             foreach ($submissions as $submission) {
                 $filePath = public_path($submission->file_path);
                 if (file_exists($filePath)) {
                     // Create a nice filename: Class_No_Name_OriginalName
                     $extension = pathinfo($submission->file_name, PATHINFO_EXTENSION);
                     $student = $submission->user;
-                    
+
                     // Sanitize filename
                     $safeName = preg_replace('/[^a-zA-Z0-9ก-๙\-_]/u', '_', $student->name);
                     $safeId = $student->student_id ?? 'NoID';
-                    
+
                     $newFilename = "{$safeId}_{$safeName}.{$extension}";
-                    
+
                     // Handle duplicate filenames
                     $counter = 1;
                     while (in_array($newFilename, $addedFiles)) {
                         $newFilename = "{$safeId}_{$safeName}_{$counter}.{$extension}";
                         $counter++;
                     }
-                    
+
                     $zip->addFile($filePath, $newFilename);
                     $addedFiles[] = $newFilename;
                 }
@@ -435,19 +492,21 @@ class TypingAdminController extends Controller
     public function exportGradesPdf()
     {
         $students = User::where('role', 'student')
-            ->with(['typingSubmissions' => function($q) {
-                $q->with('assignment')->whereNotNull('score');
-            }])
+            ->with([
+                'typingSubmissions' => function ($q) {
+                    $q->with('assignment')->whereNotNull('score');
+                }
+            ])
             ->orderBy('name')
             ->get();
-        
+
         $assignments = TypingAssignment::select('id', 'title', 'max_score')->orderBy('created_at')->get();
-        
+
         // Calculate summary
         $totalStudents = $students->count();
         $allScores = TypingSubmission::whereNotNull('score')->pluck('score');
         $averageScore = $allScores->avg() ?? 0;
-        
+
         return view('typing.admin.grades-pdf', compact('students', 'assignments', 'totalStudents', 'averageScore'));
     }
     public function downloadTemplate()
@@ -464,7 +523,7 @@ class TypingAdminController extends Controller
         try {
             $import = new \App\Imports\UsersImport;
             \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('file'));
-            
+
             // Check if new version with counters
             if (property_exists($import, 'imported')) {
                 $message = "นำเข้าข้อมูลสำเร็จ: {$import->imported} รายการ";
@@ -474,7 +533,7 @@ class TypingAdminController extends Controller
             } else {
                 $message = 'นำเข้าข้อมูลนักเรียนเรียบร้อยแล้ว';
             }
-            
+
             return redirect()->route('typing.admin.students.index')->with('success', $message);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Import error: ' . $e->getMessage());
@@ -488,7 +547,7 @@ class TypingAdminController extends Controller
     public function autoGradeSubmission(Request $request, $id)
     {
         $submission = TypingSubmission::with('assignment')->findOrFail($id);
-        
+
         // Check if it's a file submission
         if (!$submission->file_path) {
             return response()->json(['error' => 'ไม่ใช่งานประเภทอัปโหลดไฟล์'], 400);
@@ -516,11 +575,11 @@ class TypingAdminController extends Controller
 
         try {
             $gradingService = new \App\Services\DocxGradingService();
-            $checkFormatting = (bool)$submission->assignment->check_formatting;
-            
+            $checkFormatting = (bool) $submission->assignment->check_formatting;
+
             // Extract master text from master file
             $masterText = $gradingService->extractText($masterFilePath);
-            
+
             $result = $gradingService->gradeSubmission(
                 $filePath,
                 $masterText,
@@ -538,7 +597,7 @@ class TypingAdminController extends Controller
                 $result['correct_words'],
                 $result['total_words']
             );
-            
+
             if ($checkFormatting && isset($result['formatting'])) {
                 $feedback .= sprintf(
                     "\n\n📐 ตรวจรูปแบบ: %.0f%%\n",
@@ -571,12 +630,12 @@ class TypingAdminController extends Controller
                 'wrong_words' => $result['wrong_words'],
                 'missing_words' => $result['missing_words'],
             ];
-            
+
             if ($checkFormatting && isset($result['formatting_score'])) {
                 $response['formatting_score'] = $result['formatting_score'];
                 $response['combined_accuracy'] = $result['combined_accuracy'];
             }
-            
+
             return response()->json($response);
 
         } catch (\Exception $e) {
@@ -612,15 +671,15 @@ class TypingAdminController extends Controller
 
         $gradingService = new \App\Services\DocxGradingService();
         $masterText = $gradingService->extractText($masterFilePath);
-        $checkFormatting = (bool)$assignment->check_formatting;
-        
+        $checkFormatting = (bool) $assignment->check_formatting;
+
         $results = [];
         $successCount = 0;
         $errorCount = 0;
 
         foreach ($submissions as $submission) {
             $filePath = public_path($submission->file_path);
-            
+
             if (!file_exists($filePath)) {
                 $errorCount++;
                 continue;
@@ -644,7 +703,7 @@ class TypingAdminController extends Controller
                     $result['correct_words'],
                     $result['total_words']
                 );
-                
+
                 if ($checkFormatting && isset($result['formatting'])) {
                     $feedback .= sprintf("\n\n📐 ตรวจรูปแบบ: %.0f%%", $result['formatting_score']);
                     foreach ($result['formatting']['checks'] as $check) {
