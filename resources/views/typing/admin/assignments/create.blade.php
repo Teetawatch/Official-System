@@ -12,12 +12,21 @@
         <div class="card p-6">
             <form action="{{ route('typing.admin.assignments.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Chapter -->
+                    <div class="col-span-2 md:col-span-1">
+                        <label for="chapter" class="block text-sm font-medium text-gray-700 mb-1">บทที่
+                            (Chapter)</label>
+                        <input type="text" name="chapter" id="chapter" class="form-input w-full"
+                            placeholder="Ex. บทที่ 1">
+                    </div>
+
                     <!-- Title -->
-                    <div class="col-span-2">
+                    <div class="col-span-2 md:col-span-1">
                         <label for="title" class="block text-sm font-medium text-gray-700 mb-1">หัวข้อบทเรียน</label>
-                        <input type="text" name="title" id="title" class="form-input w-full" placeholder="Ex. แบบฝึกหัดพิมพ์สัมผัส บทที่ 1" required>
+                        <input type="text" name="title" id="title" class="form-input w-full"
+                            placeholder="Ex. การพิมพ์สัมผัสเบื้องต้น" required>
                     </div>
 
                     <!-- Type -->
@@ -36,7 +45,8 @@
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 cursor-pointer p-3 rounded-lg border-2 transition-all"
                                 :class="submissionType === 'file' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'">
-                                <input type="radio" name="submission_type" value="file" x-model="submissionType" class="form-radio text-primary-600">
+                                <input type="radio" name="submission_type" value="file" x-model="submissionType"
+                                    class="form-radio text-primary-600">
                                 <div>
                                     <i class="fas fa-file-upload text-primary-500 mr-1"></i>
                                     <span class="font-medium">แนบไฟล์</span>
@@ -45,7 +55,8 @@
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer p-3 rounded-lg border-2 transition-all"
                                 :class="submissionType === 'typing' ? 'border-primary-500 bg-primary-50' : 'border-gray-200'">
-                                <input type="radio" name="submission_type" value="typing" x-model="submissionType" class="form-radio text-primary-600">
+                                <input type="radio" name="submission_type" value="typing" x-model="submissionType"
+                                    class="form-radio text-primary-600">
                                 <div>
                                     <i class="fas fa-keyboard text-primary-500 mr-1"></i>
                                     <span class="font-medium">พิมพ์ในระบบ</span>
@@ -57,8 +68,10 @@
 
                     <!-- Difficulty -->
                     <div>
-                        <label for="difficulty_level" class="block text-sm font-medium text-gray-700 mb-1">ระดับความยาก (1-5)</label>
-                        <input type="number" name="difficulty_level" id="difficulty_level" min="1" max="5" value="1" class="form-input w-full">
+                        <label for="difficulty_level" class="block text-sm font-medium text-gray-700 mb-1">ระดับความยาก
+                            (1-5)</label>
+                        <input type="number" name="difficulty_level" id="difficulty_level" min="1" max="5" value="1"
+                            class="form-input w-full">
                     </div>
 
                     <!-- Max Score -->
@@ -78,7 +91,8 @@
                             <i class="fas fa-clock text-primary-500 mr-1"></i>
                             เวลาในการพิมพ์ (นาที)
                         </label>
-                        <input type="number" name="time_limit" id="time_limit" min="1" max="60" value="5" class="form-input w-full" placeholder="เช่น 5">
+                        <input type="number" name="time_limit" id="time_limit" min="1" max="60" value="5"
+                            class="form-input w-full" placeholder="เช่น 5">
                         <p class="text-xs text-gray-500 mt-1">
                             <i class="fas fa-info-circle mr-1"></i>
                             กำหนดเวลาในการพิมพ์ เช่น 1, 2, 5 นาที (ไม่ใช่กำหนดส่ง)
@@ -87,14 +101,16 @@
 
                     <!-- Due Date -->
                     <div>
-                        <label for="due_date" class="block text-sm font-medium text-gray-700 mb-1">กำหนดส่ง (Optional)</label>
+                        <label for="due_date" class="block text-sm font-medium text-gray-700 mb-1">กำหนดส่ง
+                            (Optional)</label>
                         <input type="datetime-local" name="due_date" id="due_date" class="form-input w-full">
                     </div>
 
                     <!-- Active Status -->
                     <div class="flex items-end pb-2">
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="is_active" value="1" checked class="form-checkbox text-primary-600 rounded">
+                            <input type="checkbox" name="is_active" value="1" checked
+                                class="form-checkbox text-primary-600 rounded">
                             <span class="text-sm text-gray-700">เปิดใช้งานทันที</span>
                         </label>
                     </div>
@@ -107,8 +123,10 @@
                         el.addEventListener('change', () => show = el.value === 'typing' && el.checked);
                     });
                 " x-show="show" x-cloak>
-                    <label for="content" class="block text-sm font-medium text-gray-700 mb-1">เนื้อหาที่ต้องพิมพ์</label>
-                    <textarea name="content" id="content" rows="10" class="form-textarea w-full font-mono text-base" placeholder="พิมพ์เนื้อหาที่ต้องการให้นักเรียนพิมพ์ที่นี่..."></textarea>
+                    <label for="content"
+                        class="block text-sm font-medium text-gray-700 mb-1">เนื้อหาที่ต้องพิมพ์</label>
+                    <textarea name="content" id="content" rows="10" class="form-textarea w-full font-mono text-base"
+                        placeholder="พิมพ์เนื้อหาที่ต้องการให้นักเรียนพิมพ์ที่นี่..."></textarea>
                     <p class="text-xs text-gray-500 mt-1">แนะนำให้ใช้ภาษาที่ถูกต้องตามหลักราชการ</p>
                 </div>
 
@@ -124,29 +142,34 @@
                             <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
                             <div>
                                 <p class="font-medium text-blue-800">โหมดแนบไฟล์</p>
-                                <p class="text-sm text-blue-600">นักเรียนจะอัปโหลดไฟล์ .docx ระบบจะเปรียบเทียบกับไฟล์ต้นฉบับโดยอัตโนมัติ</p>
+                                <p class="text-sm text-blue-600">นักเรียนจะอัปโหลดไฟล์ .docx
+                                    ระบบจะเปรียบเทียบกับไฟล์ต้นฉบับโดยอัตโนมัติ</p>
                             </div>
                         </div>
-                        
+
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fas fa-file-word text-primary-500 mr-1"></i>
                             ไฟล์ต้นฉบับ (สำหรับตรวจอัตโนมัติ)
                         </label>
                         <input type="file" name="master_file" accept=".docx" class="form-input w-full">
-                        <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle mr-1"></i>รองรับไฟล์ .docx เท่านั้น (ขนาดไม่เกิน 10MB)</p>
-                        
+                        <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle mr-1"></i>รองรับไฟล์ .docx
+                            เท่านั้น (ขนาดไม่เกิน 10MB)</p>
+
                         <!-- Formatting Check Toggle -->
                         <div class="mt-4 pt-4 border-t border-blue-200">
                             <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="check_formatting" value="1" class="form-checkbox text-primary-600 rounded w-5 h-5">
+                                <input type="checkbox" name="check_formatting" value="1"
+                                    class="form-checkbox text-primary-600 rounded w-5 h-5">
                                 <div>
                                     <span class="font-medium text-gray-800">ตรวจรูปแบบเอกสาร</span>
-                                    <p class="text-xs text-gray-500">ตรวจฟอนต์ (TH SarabunPSK 16pt), ระยะขอบ, ขนาดกระดาษ, หัวเรื่อง</p>
+                                    <p class="text-xs text-gray-500">ตรวจฟอนต์ (TH SarabunPSK 16pt), ระยะขอบ,
+                                        ขนาดกระดาษ, หัวเรื่อง</p>
                                 </div>
                             </label>
                         </div>
-                        
-                        <p class="text-xs text-blue-600 mt-3"><i class="fas fa-calculator mr-1"></i>คะแนน = ตัวอักษร 70% + รูปแบบ 30%</p>
+
+                        <p class="text-xs text-blue-600 mt-3"><i class="fas fa-calculator mr-1"></i>คะแนน = ตัวอักษร 70%
+                            + รูปแบบ 30%</p>
                     </div>
                 </div>
 

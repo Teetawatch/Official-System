@@ -36,6 +36,7 @@ class TypingAssignmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'chapter' => 'nullable|string|max:255',
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
             'master_file' => 'nullable|file|mimes:docx|max:10240', // 10MB max
@@ -106,6 +107,7 @@ class TypingAssignmentController extends Controller
         $assignment = TypingAssignment::findOrFail($id);
 
         $validated = $request->validate([
+            'chapter' => 'nullable|string|max:255',
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
             'master_file' => 'nullable|file|mimes:docx|max:10240', // 10MB max

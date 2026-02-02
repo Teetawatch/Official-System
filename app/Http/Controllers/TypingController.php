@@ -169,8 +169,10 @@ class TypingController extends Controller
                     $subQ->where('user_id', $userId);
                 });
             })
+            ->orderByRaw("CAST(regexp_replace(chapter, '[^0-9]', '') AS UNSIGNED) ASC")
+            ->orderBy('chapter', 'asc')
             ->latest()
-            ->paginate(10);
+            ->get();
 
         // Calculate stats
         $totalAssignments = TypingAssignment::where('is_active', true)->count();
@@ -251,6 +253,20 @@ class TypingController extends Controller
 
         $totalStudents = User::where('role', 'student')->count();
 
+        // Calculate scores by chapter
+        $chapterScores = $submissions->groupBy(function ($submission) {
+            return $submission->assignment->chapter ?? 'General';
+        })->map(function ($group) {
+            return [
+                'total' => $group->sum('score'),
+                'max' => $group->sum(function ($s) {
+                    return $s->assignment->max_score; }),
+                'count' => $group->count(),
+                'avg' => $group->avg('score'),
+                'submissions' => $group
+            ];
+        });
+
         return view('typing.student.grades', compact(
             'submissions',
             'totalScore',
@@ -258,7 +274,8 @@ class TypingController extends Controller
             'avgWpm',
             'avgAccuracy',
             'userRank',
-            'totalStudents'
+            'totalStudents',
+            'chapterScores'
         ));
     }
 
@@ -396,6 +413,74 @@ class TypingController extends Controller
     /**
      * Store uploaded file submission.
      */
+    /**
+     * Extract metadata from DOCX file
+     */
+    private function extractDocxMetadata($filePath)
+    {
+        $metadata = [];
+        $zip = new \ZipArchive;
+
+        if ($zip->open($filePath) === TRUE) {
+            // Read Core Properties (Author, Dates, Revision)
+            if (($index = $zip->locateName('docProps/core.xml')) !== false) {
+                $xmlData = $zip->getFromIndex($index);
+                $xml = simplexml_load_string($xmlData);
+
+                // Register namespaces to access dc and cp and dcterms
+                $namespaces = $xml->getNamespaces(true);
+                $dc = $xml->children($namespaces['dc'] ?? null);
+                $cp = $xml->children($namespaces['cp'] ?? null);
+                $dcterms = $xml->children($namespaces['dcterms'] ?? null);
+
+                $metadata['creator'] = (string) ($dc->creator ?? '');
+                $metadata['lastModifiedBy'] = (string) ($cp->lastModifiedBy ?? '');
+                $metadata['revision'] = (string) ($cp->revision ?? '0');
+                $metadata['created'] = (string) ($dcterms->created ?? '');
+                $metadata['modified'] = (string) ($dcterms->modified ?? '');
+            }
+
+            // Read App Properties (Total Editing Time, Pages, Words)
+            if (($index = $zip->locateName('docProps/app.xml')) !== false) {
+                $xmlData = $zip->getFromIndex($index);
+                $xml = simplexml_load_string($xmlData);
+
+                $metadata['totalTime'] = (string) ($xml->TotalTime ?? '0');
+                $metadata['pages'] = (string) ($xml->Pages ?? '0');
+                $metadata['words'] = (string) ($xml->Words ?? '0');
+            }
+
+            $zip->close();
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Extract plain text content from DOCX file
+     */
+    private function extractDocxText($filePath)
+    {
+        $content = '';
+        $zip = new \ZipArchive;
+
+        if ($zip->open($filePath) === TRUE) {
+            // Read Main Document Content
+            if (($index = $zip->locateName('word/document.xml')) !== false) {
+                $xmlData = $zip->getFromIndex($index);
+                // Strip tags is a naive but effective way to get Body Text for hashing
+                // We prefer strip_tags for speed over full DOM parsing for this purpose
+                $content = strip_tags($xmlData);
+            }
+            $zip->close();
+        }
+
+        return $content;
+    }
+
+    /**
+     * Store uploaded file submission.
+     */
     public function storeUpload(Request $request, $id)
     {
         $assignment = TypingAssignment::findOrFail($id);
@@ -410,6 +495,7 @@ class TypingController extends Controller
         }
 
         $userId = Auth::id();
+        $user = Auth::user();
 
         // Check if already submitted
         $existingSubmission = TypingSubmission::where('user_id', $userId)
@@ -431,24 +517,198 @@ class TypingController extends Controller
 
         // Generate unique filename
         $file = $request->file('file');
-        $filename = 'submission_' . $userId . '_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $extension = $file->getClientOriginalExtension();
+        $filename = 'submission_' . $userId . '_' . $id . '_' . time() . '.' . $extension;
 
         // Generate file hash for integrity check
         $tempPath = $file->getRealPath();
         $fileHash = md5_file($tempPath);
 
-        // Check for duplicate files (Plagiarism Protection)
-        // Check if any OTHER student has submitted the exact same file hash for this assignment
-        $isDuplicate = TypingSubmission::where('assignment_id', $id)
+        // --- STRICT SECURITY CHECKS START ---
+
+        // Level 1: Strict Hash Check (Exact Duplicate Check)
+        $isDuplicateHash = TypingSubmission::where('assignment_id', $id)
             ->where('file_hash', $fileHash)
             ->where('user_id', '!=', $userId)
             ->exists();
 
-        if ($isDuplicate) {
+        if ($isDuplicateHash) {
             return back()->withInput()->withErrors([
-                'file' => 'ไม่สามารถส่งไฟล์นี้ได้ เนื่องจากระบบตรวจพบไฟล์ซ้ำกับนักเรียนคนอื่น (Duplicate File Detected)'
+                'file' => 'ไม่สามารถส่งไฟล์นี้ได้ เนื่องจากระบบตรวจพบว่าไฟล์นี้มีเนื้อหาเหมือนกับไฟล์ที่มีในระบบแล้ว (Duplicate File Signature)'
             ]);
         }
+
+        // Initialize extended metadata
+        $docMetadata = [];
+        $contentHash = null;
+
+        if (strtolower($extension) === 'docx') {
+            try {
+                // Extract Metadata
+                $docMetadata = $this->extractDocxMetadata($tempPath);
+
+                // Extract Plain Text Content (for Content-Based Similarity Check)
+                $plainText = $this->extractDocxText($tempPath);
+                // Hash the content (Ignore spaces/newlines to catch reformatting)
+                $contentHash = md5(preg_replace('/\s+/', '', $plainText));
+
+                // Add content hash to metadata for storage
+                $docMetadata['content_hash'] = $contentHash;
+
+                // Fetch all other submissions for this assignment to compare
+                $otherSubmissions = TypingSubmission::where('assignment_id', $id)
+                    ->where('user_id', '!=', $userId)
+                    ->whereNotNull('file_metadata')
+                    ->get();
+
+                foreach ($otherSubmissions as $other) {
+                    $otherMeta = $other->file_metadata;
+
+                    if (!is_array($otherMeta)) {
+                        continue;
+                    }
+
+                    // Level 2: Realistic Typing Speed Check (Anti-Copy-Paste)
+                    // If content is substantial (>300 words) but Total Editing Time is suspiciously low (<= 1 min)
+                    // This implies the user copied text from elsewhere and pasted it into a new file.
+                    if (isset($docMetadata['words']) && isset($docMetadata['totalTime'])) {
+                        $wordCount = (int) $docMetadata['words'];
+                        $editTime = (int) $docMetadata['totalTime']; // In minutes
+
+                        if ($wordCount > 300 && $editTime <= 1) {
+                            return back()->withInput()->withErrors([
+                                'file' => 'ปฏิเสธการส่ง: ตรวจพบระยะเวลาการทำงาน (Editing Time) น้อยผิดปกติสำหรับการพิมพ์เนื้อหาจำนวนมาก (เข้าข่าย Copy-Paste)'
+                            ]);
+                        }
+                    }
+
+                    // Level 3: Forensic Metadata Match (Deep Properties)
+                    $otherDocx = $otherMeta['docx_metadata'] ?? [];
+
+                    // Check A: Exact Modified Time Match
+                    if (isset($docMetadata['modified']) && isset($otherDocx['modified'])) {
+                        if ($docMetadata['modified'] === $otherDocx['modified'] && !empty($docMetadata['modified'])) {
+                            return back()->withInput()->withErrors([
+                                'file' => 'ปฏิเสธการส่ง: ตรวจพบ Meta Data (Timestamp) ตรงกับนักเรียนคนอื่น'
+                            ]);
+                        }
+                    }
+
+                    // Check B: Exact Creation Time Match
+                    // Probably impossible for two students to create file at exact same second unless copied.
+                    if (isset($docMetadata['created']) && isset($otherDocx['created'])) {
+                        if ($docMetadata['created'] === $otherDocx['created'] && !empty($docMetadata['created'])) {
+                            return back()->withInput()->withErrors([
+                                'file' => 'ปฏิเสธการส่ง: ตรวจพบเวลาสร้างไฟล์ (Creation Time) ตรงกับไฟล์ของคนอื่น'
+                            ]);
+                        }
+                    }
+
+                    // Check C: Statistical Fingerprint (Revision + EditingTime)
+                    // If Revision count is identical AND Total Editing Time is identical, it's a clone.
+                    if (isset($docMetadata['revision']) && isset($docMetadata['totalTime'])) {
+                        if (
+                            ($docMetadata['revision'] == ($otherDocx['revision'] ?? -1)) &&
+                            ($docMetadata['totalTime'] == ($otherDocx['totalTime'] ?? -1)) &&
+                            ($docMetadata['revision'] > 1)
+                        ) { // Only check if revision > 1 to avoid fresh files coincidence
+                            return back()->withInput()->withErrors([
+                                'file' => 'ปฏิเสธการส่ง: ข้อมูลสถิติการแก้ไข (Revision & Editing Time) ซ้ำกับไฟล์ของคนอื่น'
+                            ]);
+                        }
+                    }
+
+                    // Level 4: Identity Check
+                    if (isset($docMetadata['lastModifiedBy'])) {
+                        $lastMod = trim($docMetadata['lastModifiedBy']);
+                        $otherStudent = User::find($other->user_id);
+                        if ($otherStudent && strtolower($lastMod) === strtolower($otherStudent->name)) {
+                            return back()->withInput()->withErrors([
+                                'file' => "ปฏิเสธการส่ง: ไฟล์นี้ถูกแก้ไขล่าสุดโดย {$lastMod} (นักเรียนคนอื่น)"
+                            ]);
+                        }
+
+                        // Check Creator if available
+                        if (isset($docMetadata['creator']) && $otherStudent) {
+                            $creator = trim($docMetadata['creator']);
+                            if (strtolower($creator) === strtolower($otherStudent->name)) {
+                                return back()->withInput()->withErrors([
+                                    'file' => "ปฏิเสธการส่ง: ไฟล์นี้ต้นฉบับถูกสร้างโดย {$creator} (นักเรียนคนอื่น)"
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+            } catch (\Exception $e) {
+                // Log error if needed, but allow upload if extraction fails to avoid blocking valid files with weird structure
+                // \Log::error($e->getMessage());
+            }
+        }
+        // --- STRICT SECURITY CHECKS END ---
+
+        // 2. Metadata Inspection (For DOCX)
+        $docMetadata = [];
+        if (strtolower($extension) === 'docx') {
+            try {
+                $docMetadata = $this->extractDocxMetadata($tempPath);
+
+                // Fetch all other submissions for this assignment to compare
+                $otherSubmissions = TypingSubmission::where('assignment_id', $id)
+                    ->where('user_id', '!=', $userId)
+                    ->whereNotNull('file_metadata')
+                    ->get();
+
+                foreach ($otherSubmissions as $other) {
+                    $otherMeta = $other->file_metadata;
+
+                    if (!is_array($otherMeta)) {
+                        continue;
+                    }
+
+                    // Check A: Exact Modified Time Match (Highly suspicious for copy-paste file without edit)
+                    if (isset($docMetadata['modified']) && isset($otherMeta['docx_metadata']['modified'])) {
+                        if ($docMetadata['modified'] === $otherMeta['docx_metadata']['modified'] && !empty($docMetadata['modified'])) {
+                            return back()->withInput()->withErrors([
+                                'file' => 'ปฏิเสธการส่ง: ตรวจพบ Meta Data (Timestamp) ตรงกับนักเรียนคนอื่น กรุณาสร้างไฟล์ด้วยตนเอง'
+                            ]);
+                        }
+                    }
+
+                    // Check B: Author/LastModifiedBy Identity Check
+                    if (isset($docMetadata['lastModifiedBy'])) {
+                        $lastMod = trim($docMetadata['lastModifiedBy']);
+                        // Check if 'lastModifiedBy' equals the Other Student's Name in DB
+                        $otherStudent = User::find($other->user_id);
+                        if ($otherStudent && strtolower($lastMod) === strtolower($otherStudent->name)) {
+                            return back()->withInput()->withErrors([
+                                'file' => "ปฏิเสธการส่ง: ไฟล์นี้ถูกแก้ไขล่าสุดโดย {$lastMod} ซึ่งเป็นชื่อของนักเรียนคนอื่นในระบบ"
+                            ]);
+                        }
+
+                        // Check C: Creator Identity Check
+                        if (isset($docMetadata['creator']) && $otherStudent) {
+                            $creator = trim($docMetadata['creator']);
+                            // If creator is another student in the system (and not the teacher/admin/common name)
+                            // We compare strictly with the other student's registered name
+                            if (strtolower($creator) === strtolower($otherStudent->name)) {
+                                return back()->withInput()->withErrors([
+                                    'file' => "ปฏิเสธการส่ง: ไฟล์นี้ถูกสร้างโดย {$creator} ซึ่งเป็นชื่อของนักเรียนคนอื่นในระบบ"
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                // Check C: Self-Correction (Ensure LastModifiedBy roughly matches current user?)
+                // Optional: Might be strict if they use nickname on PC. Skip for now.
+
+            } catch (\Exception $e) {
+                // Determine if we should fail or just warn. For strict mode, maybe log.
+                // We'll proceed but log error if needed.
+            }
+        }
+        // --- STRICT SECURITY CHECKS END ---
 
         // Extract basic metadata
         $metadata = [
@@ -456,6 +716,7 @@ class TypingController extends Controller
             'size' => $file->getSize(),
             'mime_type' => $file->getClientMimeType(),
             'uploaded_at' => now()->toDateTimeString(),
+            'docx_metadata' => $docMetadata // Add the deep metadata
         ];
 
         // Move file
@@ -468,7 +729,7 @@ class TypingController extends Controller
             'file_path' => 'uploads/submissions/' . $filename,
             'file_name' => $file->getClientOriginalName(),
             'file_hash' => $fileHash,
-            'file_metadata' => $metadata,
+            'file_metadata' => $metadata, // Will be cast to JSON automatically if model has cast or by Laravel
             'wpm' => 0,
             'accuracy' => 0,
             'time_taken' => 0,

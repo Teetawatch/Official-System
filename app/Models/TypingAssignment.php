@@ -11,6 +11,7 @@ class TypingAssignment extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'chapter',
         'title',
         'content',
         'master_file_path',
