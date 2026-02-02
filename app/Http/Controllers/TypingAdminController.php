@@ -599,9 +599,9 @@ class TypingAdminController extends Controller
                 $masterFilePath // Pass master file for formatting comparison
             );
 
-            // Build STRICT MODE feedback message with character-level info
+            // Build ULTRA STRICT MODE feedback message with character-level info
             $feedback = sprintf(
-                "🔒 ตรวจโหมดเข้มงวด (ต้องตรงกับต้นฉบับเป๊ะๆ)\n\n📝 ความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
+                "🔒 ตรวจโหมดสุดเข้มงวด (ULTRA STRICT)\n⚡ ตรวจทุกตัวอักษร, ช่องว่าง, ขึ้นบรรทัดใหม่\n\n📝 ความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
                 $result['accuracy'],
                 $result['correct_chars'] ?? 0,
                 $result['total_chars'] ?? 0,
@@ -612,6 +612,57 @@ class TypingAdminController extends Controller
             // Show text accuracy issues if any
             if ($result['accuracy'] < 100) {
                 $feedback .= sprintf("\n⚠️ พบตัวอักษรผิด/ขาด: %d ตัว", $result['wrong_chars'] ?? ($result['total_chars'] - ($result['correct_chars'] ?? 0)));
+            }
+
+            // ULTRA STRICT: Show whitespace analysis
+            if (isset($result['whitespace_analysis'])) {
+                $ws = $result['whitespace_analysis'];
+                $feedback .= "\n\n📏 ตรวจ Whitespace (สุดเข้มงวด)";
+                $feedback .= "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+
+                // Line breaks
+                $lineIcon = ($ws['line_break_diff'] == 0) ? '✅' : '❌';
+                $feedback .= sprintf(
+                    "\n%s จำนวนบรรทัด: %d/%d (ต่าง %d)",
+                    $lineIcon,
+                    $ws['submitted_lines'],
+                    $ws['master_lines'],
+                    $ws['line_break_diff']
+                );
+
+                // Spaces
+                $spaceIcon = ($ws['space_diff'] == 0) ? '✅' : '❌';
+                $feedback .= sprintf(
+                    "\n%s ช่องว่าง (Space): %d/%d (ต่าง %d)",
+                    $spaceIcon,
+                    $ws['submitted_spaces'],
+                    $ws['master_spaces'],
+                    $ws['space_diff']
+                );
+
+                // Double spaces warning
+                if ($ws['submitted_double_spaces'] != $ws['master_double_spaces']) {
+                    $feedback .= sprintf(
+                        "\n⚠️ ช่องว่างซ้อน: พบ %d ต้องการ %d",
+                        $ws['submitted_double_spaces'],
+                        $ws['master_double_spaces']
+                    );
+                }
+
+                // Leading/Trailing spaces
+                if ($ws['leading_space_diff'] > 0) {
+                    $feedback .= sprintf("\n⚠️ ช่องว่างหน้าบรรทัด: ต่าง %d", $ws['leading_space_diff']);
+                }
+                if ($ws['trailing_space_diff'] > 0) {
+                    $feedback .= sprintf("\n⚠️ ช่องว่างท้ายบรรทัด: ต่าง %d", $ws['trailing_space_diff']);
+                }
+
+                // Summary
+                if ($ws['passed']) {
+                    $feedback .= "\n✨ Whitespace ตรงทั้งหมด!";
+                } else {
+                    $feedback .= sprintf("\n❗ พบข้อผิดพลาด Whitespace: %d รายการ", $ws['total_errors']);
+                }
             }
 
             if ($checkFormatting && isset($result['formatting'])) {
@@ -736,9 +787,9 @@ class TypingAdminController extends Controller
                     $masterFilePath
                 );
 
-                // Build STRICT MODE feedback with character-level info
+                // Build ULTRA STRICT MODE feedback with character-level info
                 $feedback = sprintf(
-                    "🔒 ตรวจโหมดเข้มงวด (ต้องตรงกับต้นฉบับเป๊ะๆ)\n\n📝 ความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
+                    "🔒 ตรวจโหมดสุดเข้มงวด (ULTRA STRICT)\n⚡ ตรวจทุกตัวอักษร, ช่องว่าง, ขึ้นบรรทัดใหม่\n\n📝 ความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
                     $result['accuracy'],
                     $result['correct_chars'] ?? 0,
                     $result['total_chars'] ?? 0,
@@ -749,6 +800,49 @@ class TypingAdminController extends Controller
                 // Show text accuracy issues if any
                 if ($result['accuracy'] < 100) {
                     $feedback .= sprintf("\n⚠️ พบตัวอักษรผิด/ขาด: %d ตัว", $result['wrong_chars'] ?? ($result['total_chars'] - ($result['correct_chars'] ?? 0)));
+                }
+
+                // ULTRA STRICT: Show whitespace analysis
+                if (isset($result['whitespace_analysis'])) {
+                    $ws = $result['whitespace_analysis'];
+                    $feedback .= "\n\n📏 ตรวจ Whitespace (สุดเข้มงวด)";
+                    $feedback .= "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+
+                    // Line breaks
+                    $lineIcon = ($ws['line_break_diff'] == 0) ? '✅' : '❌';
+                    $feedback .= sprintf(
+                        "\n%s จำนวนบรรทัด: %d/%d (ต่าง %d)",
+                        $lineIcon,
+                        $ws['submitted_lines'],
+                        $ws['master_lines'],
+                        $ws['line_break_diff']
+                    );
+
+                    // Spaces
+                    $spaceIcon = ($ws['space_diff'] == 0) ? '✅' : '❌';
+                    $feedback .= sprintf(
+                        "\n%s ช่องว่าง (Space): %d/%d (ต่าง %d)",
+                        $spaceIcon,
+                        $ws['submitted_spaces'],
+                        $ws['master_spaces'],
+                        $ws['space_diff']
+                    );
+
+                    // Double spaces warning
+                    if ($ws['submitted_double_spaces'] != $ws['master_double_spaces']) {
+                        $feedback .= sprintf(
+                            "\n⚠️ ช่องว่างซ้อน: พบ %d ต้องการ %d",
+                            $ws['submitted_double_spaces'],
+                            $ws['master_double_spaces']
+                        );
+                    }
+
+                    // Summary
+                    if ($ws['passed']) {
+                        $feedback .= "\n✨ Whitespace ตรงทั้งหมด!";
+                    } else {
+                        $feedback .= sprintf("\n❗ พบข้อผิดพลาด Whitespace: %d รายการ", $ws['total_errors']);
+                    }
                 }
 
                 if ($checkFormatting && isset($result['formatting'])) {

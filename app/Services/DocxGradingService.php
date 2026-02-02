@@ -54,6 +54,7 @@ class DocxGradingService
 
     /**
      * Compare submitted text with master text and calculate accuracy.
+     * ULTRA STRICT MODE: Counts whitespace and line breaks as characters.
      *
      * @param string $submittedText Text from student's submission
      * @param string $masterText Correct/expected text
@@ -64,6 +65,9 @@ class DocxGradingService
         // Normalize texts with enhanced normalization for Thai
         $submittedNormalized = $this->normalizeText($submittedText);
         $masterNormalized = $this->normalizeText($masterText);
+
+        // ULTRA STRICT: Analyze whitespace and line breaks SEPARATELY
+        $whitespaceAnalysis = $this->analyzeWhitespace($submittedNormalized, $masterNormalized);
 
         // CHARACTER-LEVEL COMPARISON for precise accuracy
         // Convert strings to character arrays (UTF-8 safe)
@@ -86,6 +90,7 @@ class DocxGradingService
                 'wrong_words' => 0,
                 'missing_words' => 0,
                 'extra_words' => 0,
+                'whitespace_analysis' => $whitespaceAnalysis,
                 'details' => [],
             ];
         }
@@ -129,7 +134,97 @@ class DocxGradingService
             'wrong_words' => $totalMasterWords - $correctWords,
             'missing_words' => max(0, $totalMasterWords - $totalSubmittedWords),
             'extra_words' => max(0, $totalSubmittedWords - $totalMasterWords),
+            'whitespace_analysis' => $whitespaceAnalysis,
             'details' => [],
+        ];
+    }
+
+    /**
+     * Analyze whitespace differences between two texts.
+     * ULTRA STRICT: Counts spaces, tabs, and line breaks separately.
+     *
+     * @param string $submitted Normalized submitted text
+     * @param string $master Normalized master text
+     * @return array Detailed whitespace analysis
+     */
+    private function analyzeWhitespace(string $submitted, string $master): array
+    {
+        // Count spaces in both texts
+        $masterSpaces = preg_match_all('/ /', $master);
+        $submittedSpaces = preg_match_all('/ /', $submitted);
+
+        // Count tabs in both texts
+        $masterTabs = preg_match_all('/\t/', $master);
+        $submittedTabs = preg_match_all('/\t/', $submitted);
+
+        // Count line breaks in both texts
+        $masterLineBreaks = preg_match_all('/\n/', $master);
+        $submittedLineBreaks = preg_match_all('/\n/', $submitted);
+
+        // Count consecutive spaces (potential double-space errors)
+        $masterDoubleSpaces = preg_match_all('/  +/', $master);
+        $submittedDoubleSpaces = preg_match_all('/  +/', $submitted);
+
+        // Count leading/trailing spaces in lines
+        $masterLines = explode("\n", $master);
+        $submittedLines = explode("\n", $submitted);
+
+        $masterLeadingSpaces = 0;
+        $masterTrailingSpaces = 0;
+        foreach ($masterLines as $line) {
+            if (preg_match('/^( +)/', $line, $m)) {
+                $masterLeadingSpaces += strlen($m[1]);
+            }
+            if (preg_match('/( +)$/', $line, $m)) {
+                $masterTrailingSpaces += strlen($m[1]);
+            }
+        }
+
+        $submittedLeadingSpaces = 0;
+        $submittedTrailingSpaces = 0;
+        foreach ($submittedLines as $line) {
+            if (preg_match('/^( +)/', $line, $m)) {
+                $submittedLeadingSpaces += strlen($m[1]);
+            }
+            if (preg_match('/( +)$/', $line, $m)) {
+                $submittedTrailingSpaces += strlen($m[1]);
+            }
+        }
+
+        // Calculate differences
+        $spaceDiff = abs($masterSpaces - $submittedSpaces);
+        $tabDiff = abs($masterTabs - $submittedTabs);
+        $lineBreakDiff = abs($masterLineBreaks - $submittedLineBreaks);
+        $doubleSpaceDiff = abs($masterDoubleSpaces - $submittedDoubleSpaces);
+        $leadingSpaceDiff = abs($masterLeadingSpaces - $submittedLeadingSpaces);
+        $trailingSpaceDiff = abs($masterTrailingSpaces - $submittedTrailingSpaces);
+
+        $totalErrors = $spaceDiff + $tabDiff + $lineBreakDiff;
+        $passed = ($totalErrors === 0);
+
+        return [
+            'passed' => $passed,
+            'total_errors' => $totalErrors,
+            'master_spaces' => $masterSpaces,
+            'submitted_spaces' => $submittedSpaces,
+            'space_diff' => $spaceDiff,
+            'master_tabs' => $masterTabs,
+            'submitted_tabs' => $submittedTabs,
+            'tab_diff' => $tabDiff,
+            'master_line_breaks' => $masterLineBreaks,
+            'submitted_line_breaks' => $submittedLineBreaks,
+            'line_break_diff' => $lineBreakDiff,
+            'master_double_spaces' => $masterDoubleSpaces,
+            'submitted_double_spaces' => $submittedDoubleSpaces,
+            'double_space_diff' => $doubleSpaceDiff,
+            'master_leading_spaces' => $masterLeadingSpaces,
+            'submitted_leading_spaces' => $submittedLeadingSpaces,
+            'leading_space_diff' => $leadingSpaceDiff,
+            'master_trailing_spaces' => $masterTrailingSpaces,
+            'submitted_trailing_spaces' => $submittedTrailingSpaces,
+            'trailing_space_diff' => $trailingSpaceDiff,
+            'master_lines' => count($masterLines),
+            'submitted_lines' => count($submittedLines),
         ];
     }
 
@@ -382,8 +477,19 @@ class DocxGradingService
 
     /**
      * Normalize text for comparison.
-     * STRICT MODE: Preserves exact spacing and line breaks.
-     * Only normalizes Unicode and removes invisible characters.
+     * ULTRA STRICT MODE: Preserves ALL whitespace and line breaks exactly.
+     * Only normalizes Unicode characters that users cannot control.
+     * 
+     * Whitespace that IS preserved:
+     * - Multiple spaces (students must type exact number)
+     * - Tabs (converted to spaces for visibility, but counted)
+     * - Line breaks (exact number must match)
+     * - Leading/trailing whitespace in each line
+     * 
+     * Characters that ARE normalized (invisible to users):
+     * - Zero-width characters (U+200B-U+200D, U+FEFF)
+     * - Unicode normalization (NFC) for Thai characters
+     * - Different line break styles (CR, LF, CRLF → LF)
      */
     private function normalizeText(string $text): string
     {
@@ -394,27 +500,25 @@ class DocxGradingService
         }
 
         // Remove ONLY zero-width characters and other invisible Unicode characters
-        // These are characters users cannot see or control
-        // Replace with empty string (not space) to avoid affecting spacing
+        // These are characters users cannot see or control at all
         $text = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $text);
 
-        // Convert non-breaking space to regular space (users can't distinguish these)
+        // Convert non-breaking space to regular space (users can't distinguish these visually)
         $text = preg_replace('/\x{00A0}/u', ' ', $text);
 
         // Normalize line breaks to \n (different OS use different line breaks)
-        // This is essential for cross-platform compatibility
+        // This is the ONLY whitespace normalization we do
         $text = preg_replace('/\r\n|\r/', "\n", $text);
 
-        // STRICT MODE: Do NOT collapse multiple spaces
+        // ULTRA STRICT MODE: Do NOT trim!
+        // Leading/trailing whitespace must match exactly
+        // (Previously: $text = trim($text);)
+
+        // ULTRA STRICT MODE: Do NOT collapse multiple spaces!
         // Students must type exact number of spaces as the original
-        // (Previously: $text = preg_replace('/[ \t]+/', ' ', $text);)
 
-        // STRICT MODE: Do NOT collapse multiple line breaks
+        // ULTRA STRICT MODE: Do NOT collapse multiple line breaks!
         // Students must match exact line breaks as the original
-        // (Previously: $text = preg_replace('/\n+/', "\n", $text);)
-
-        // Trim only leading/trailing whitespace from the entire text
-        $text = trim($text);
 
         return $text;
     }
@@ -1193,7 +1297,7 @@ class DocxGradingService
         $headersPassed = count($correctLabels) >= count($headerLabels);
         if ($headersPassed)
             $passedCount++;
-        
+
         $actualMessage = 'ไม่พบหัวข้อ';
         if (count($foundLabels) > 0) {
             $actualMessage = 'พบ ' . count($correctLabels) . '/' . count($headerLabels) . ' หัวข้อถูกต้อง';
@@ -1201,7 +1305,7 @@ class DocxGradingService
                 $actualMessage .= ' (ผิด: ' . implode(', ', $wrongLabels) . ')';
             }
         }
-        
+
         $checks[] = [
             'element' => 'header_labels',
             'label' => 'หัวข้อเอกสาร (ส่วนราชการ/ที่/วันที่/เรื่อง)',
