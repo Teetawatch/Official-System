@@ -98,7 +98,12 @@ Route::prefix('typing')->name('typing.')->group(function () {
 
                 // File Upload Routes
                 Route::get('/upload/{id}', [App\Http\Controllers\TypingController::class, 'showUpload'])->name('upload');
+                Route::get('/upload/{id}', [App\Http\Controllers\TypingController::class, 'showUpload'])->name('upload');
                 Route::post('/upload/{id}', [App\Http\Controllers\TypingController::class, 'storeUpload'])->name('upload.submit');
+
+                // Online Editor Routes
+                Route::get('/editor/{id}', [App\Http\Controllers\TypingController::class, 'showEditor'])->name('editor');
+                Route::post('/editor/{id}', [App\Http\Controllers\TypingController::class, 'storeEditor'])->name('editor.submit');
 
                 // 1v1 Match Routes
                 Route::get('/matches/ranking', [App\Http\Controllers\TypingMatchController::class, 'ranking'])->name('matches.ranking');

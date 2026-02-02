@@ -260,7 +260,8 @@ class TypingController extends Controller
             return [
                 'total' => $group->sum('score'),
                 'max' => $group->sum(function ($s) {
-                    return $s->assignment->max_score; }),
+                    return $s->assignment->max_score;
+                }),
                 'count' => $group->count(),
                 'avg' => $group->avg('score'),
                 'submissions' => $group
@@ -749,5 +750,80 @@ class TypingController extends Controller
 
         return redirect()->route('typing.student.assignments')
             ->with('success', 'อัปโหลดไฟล์เรียบร้อยแล้ว รอการตรวจจากอาจารย์');
+    }
+
+    /**
+     * Show online editor for assignments.
+     */
+    public function showEditor($id)
+    {
+        $assignment = TypingAssignment::findOrFail($id);
+
+        // Check if assignment allows file/text submission
+        // For simplicity, we allow editor for 'file' type as an alternative
+        if ($assignment->submission_type !== 'file' && $assignment->submission_type !== 'text') {
+            return redirect()->route('typing.student.assignments');
+        }
+
+        // Check if already submitted
+        $existingSubmission = TypingSubmission::where('user_id', Auth::id())
+            ->where('assignment_id', $id)
+            ->first();
+
+        return view('typing.student.editor', compact('assignment', 'existingSubmission'));
+    }
+
+    /**
+     * Store online editor submission.
+     */
+    public function storeEditor(Request $request, $id)
+    {
+        $assignment = TypingAssignment::findOrFail($id);
+
+        $request->validate([
+            'content' => 'required|string',
+        ]);
+
+        if ($this->isDeadlinePassed($assignment)) {
+            return response()->json(['success' => false, 'message' => 'หมดเวลาส่งงานแล้ว'], 403);
+        }
+
+        $userId = Auth::id();
+
+        // Generate a HTML file from the content
+        $content = $request->input('content');
+        $htmlContent = "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Submission</title></head><body>" . $content . "</body></html>";
+
+        $filename = 'submission_editor_' . $userId . '_' . $id . '_' . time() . '.html';
+        $uploadPath = public_path('uploads/submissions');
+
+        if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+
+        file_put_contents($uploadPath . '/' . $filename, $htmlContent);
+
+        // Check submission
+        $existingSubmission = TypingSubmission::where('user_id', $userId)
+            ->where('assignment_id', $id)
+            ->first();
+
+        $submissionData = [
+            'user_id' => $userId,
+            'assignment_id' => $id,
+            'file_path' => 'uploads/submissions/' . $filename,
+            'file_name' => 'Online_Document.html',
+            'wpm' => 0,
+            'accuracy' => 0,
+            'time_taken' => 0,
+        ];
+
+        if ($existingSubmission) {
+            $existingSubmission->update($submissionData);
+        } else {
+            TypingSubmission::create($submissionData);
+        }
+
+        return response()->json(['success' => true, 'redirect' => route('typing.student.assignments')]);
     }
 }
