@@ -933,14 +933,12 @@ class DocxGradingService
         $passedCount = 0;
         $totalChecks = 0;
 
-        // Check Font Name
+        // STRICT MODE: Check Font Name - must match exactly
         $totalChecks++;
         $expectedFont = $rules['font_name'];
         $actualFont = $extracted['primary_font'];
-        $fontPassed = $actualFont && (
-            stripos($actualFont, 'Sarabun') !== false ||
-            stripos($actualFont, 'TH Sarabun') !== false
-        );
+        // STRICT: Font name must contain the expected font name (case-insensitive)
+        $fontPassed = $actualFont && stripos($actualFont, $expectedFont) !== false;
         if ($fontPassed)
             $passedCount++;
         $checks[] = [
@@ -949,84 +947,92 @@ class DocxGradingService
             'expected' => $expectedFont,
             'actual' => $actualFont ?? 'ไม่พบ',
             'passed' => $fontPassed,
+            'deduction' => $fontPassed ? 0 : 1, // Deduct 1 point if wrong
         ];
 
-        // Check Font Size
+        // STRICT MODE: Check Font Size - must match EXACTLY (no tolerance)
         $totalChecks++;
         $expectedSize = $rules['font_size'];
         $actualSize = $extracted['primary_font_size'];
-        $sizePassed = $actualSize && abs($actualSize - $expectedSize) <= 2; // Allow 2pt tolerance
+        // STRICT: Font size must be EXACTLY the same - NO TOLERANCE
+        $sizePassed = $actualSize && $actualSize == $expectedSize;
         if ($sizePassed)
             $passedCount++;
         $checks[] = [
             'element' => 'font_size',
             'label' => 'ขนาดฟอนต์เนื้อหา',
-            'expected' => $expectedSize . ' pt',
+            'expected' => $expectedSize . ' pt (ต้องตรงเป๊ะ)',
             'actual' => $actualSize ? $actualSize . ' pt' : 'ไม่พบ',
             'passed' => $sizePassed,
+            'deduction' => $sizePassed ? 0 : 1,
         ];
 
-        // Check Page Margins
+        // STRICT MODE: Check Page Margins - must match EXACTLY (tolerance only 0.1cm for rounding)
         $margins = $extracted['margins'] ?? [];
+        $marginTolerance = 0.1; // Only allow 0.1cm tolerance for rounding errors
 
-        // Top margin
+        // Top margin - STRICT
         $totalChecks++;
         $expectedTop = $rules['margin_top'] ?? 2.5;
         $actualTop = $margins['top'] ?? 0;
-        $topPassed = abs($actualTop - $expectedTop) <= 0.3; // 0.3cm tolerance
+        $topPassed = abs($actualTop - $expectedTop) <= $marginTolerance;
         if ($topPassed)
             $passedCount++;
         $checks[] = [
             'element' => 'margin_top',
             'label' => 'ระยะขอบบน',
-            'expected' => $expectedTop . ' ซม.',
-            'actual' => $actualTop > 0 ? round($actualTop, 1) . ' ซม.' : 'ไม่พบ',
+            'expected' => $expectedTop . ' ซม. (ต้องตรงเป๊ะ)',
+            'actual' => $actualTop > 0 ? round($actualTop, 2) . ' ซม.' : 'ไม่พบ',
             'passed' => $topPassed,
+            'deduction' => $topPassed ? 0 : 1,
         ];
 
-        // Left margin
+        // Left margin - STRICT
         $totalChecks++;
         $expectedLeft = $rules['margin_left'] ?? 3.0;
         $actualLeft = $margins['left'] ?? 0;
-        $leftPassed = abs($actualLeft - $expectedLeft) <= 0.3;
+        $leftPassed = abs($actualLeft - $expectedLeft) <= $marginTolerance;
         if ($leftPassed)
             $passedCount++;
         $checks[] = [
             'element' => 'margin_left',
             'label' => 'ระยะขอบซ้าย',
-            'expected' => $expectedLeft . ' ซม.',
-            'actual' => $actualLeft > 0 ? round($actualLeft, 1) . ' ซม.' : 'ไม่พบ',
+            'expected' => $expectedLeft . ' ซม. (ต้องตรงเป๊ะ)',
+            'actual' => $actualLeft > 0 ? round($actualLeft, 2) . ' ซม.' : 'ไม่พบ',
             'passed' => $leftPassed,
+            'deduction' => $leftPassed ? 0 : 1,
         ];
 
-        // Bottom margin
+        // Bottom margin - STRICT
         $totalChecks++;
         $expectedBottom = $rules['margin_bottom'] ?? 2.0;
         $actualBottom = $margins['bottom'] ?? 0;
-        $bottomPassed = abs($actualBottom - $expectedBottom) <= 0.3;
+        $bottomPassed = abs($actualBottom - $expectedBottom) <= $marginTolerance;
         if ($bottomPassed)
             $passedCount++;
         $checks[] = [
             'element' => 'margin_bottom',
             'label' => 'ระยะขอบล่าง',
-            'expected' => $expectedBottom . ' ซม.',
-            'actual' => $actualBottom > 0 ? round($actualBottom, 1) . ' ซม.' : 'ไม่พบ',
+            'expected' => $expectedBottom . ' ซม. (ต้องตรงเป๊ะ)',
+            'actual' => $actualBottom > 0 ? round($actualBottom, 2) . ' ซม.' : 'ไม่พบ',
             'passed' => $bottomPassed,
+            'deduction' => $bottomPassed ? 0 : 1,
         ];
 
-        // Right margin
+        // Right margin - STRICT
         $totalChecks++;
         $expectedRight = $rules['margin_right'] ?? 2.0;
         $actualRight = $margins['right'] ?? 0;
-        $rightPassed = abs($actualRight - $expectedRight) <= 0.3;
+        $rightPassed = abs($actualRight - $expectedRight) <= $marginTolerance;
         if ($rightPassed)
             $passedCount++;
         $checks[] = [
             'element' => 'margin_right',
             'label' => 'ระยะขอบขวา',
-            'expected' => $expectedRight . ' ซม.',
-            'actual' => $actualRight > 0 ? round($actualRight, 1) . ' ซม.' : 'ไม่พบ',
+            'expected' => $expectedRight . ' ซม. (ต้องตรงเป๊ะ)',
+            'actual' => $actualRight > 0 ? round($actualRight, 2) . ' ซม.' : 'ไม่พบ',
             'passed' => $rightPassed,
+            'deduction' => $rightPassed ? 0 : 1,
         ];
 
         // Check Paper Size
@@ -1059,16 +1065,19 @@ class DocxGradingService
             'passed' => $orientPassed,
         ];
 
-        // Check Title "บันทึกข้อความ" formatting
+        // STRICT MODE: Check Title "บันทึกข้อความ" formatting - must match EXACTLY
         $boldTexts = $extracted['bold_texts'] ?? [];
         $titleFound = false;
         $titleSizeCorrect = false;
+        $actualTitleSize = null;
 
         foreach ($boldTexts as $boldItem) {
             if (strpos($boldItem['text'], 'บันทึกข้อความ') !== false) {
                 $titleFound = true;
                 $expectedTitleSize = $rules['title_font_size'] ?? 29;
-                if ($boldItem['size'] && abs($boldItem['size'] - $expectedTitleSize) <= 2) {
+                $actualTitleSize = $boldItem['size'];
+                // STRICT: Title size must be EXACTLY the same - NO TOLERANCE
+                if ($boldItem['size'] && $boldItem['size'] == $expectedTitleSize) {
                     $titleSizeCorrect = true;
                 }
                 break;
@@ -1082,11 +1091,12 @@ class DocxGradingService
         $checks[] = [
             'element' => 'title_format',
             'label' => 'หัวเรื่อง "บันทึกข้อความ"',
-            'expected' => 'ตัวหนา, ' . ($rules['title_font_size'] ?? 29) . ' pt',
+            'expected' => 'ตัวหนา, ' . ($rules['title_font_size'] ?? 29) . ' pt (ต้องตรงเป๊ะ)',
             'actual' => $titleFound ?
-                ($titleSizeCorrect ? 'ตัวหนา, ขนาดถูกต้อง' : 'ตัวหนา, ขนาดไม่ถูกต้อง') :
+                ('ตัวหนา, ' . ($actualTitleSize ?? 'ไม่ระบุ') . ' pt' . ($titleSizeCorrect ? ' ✓' : ' ✗')) :
                 'ไม่พบ',
             'passed' => $titlePassed,
+            'deduction' => $titlePassed ? 0 : 1,
         ];
 
         // Check Alignment
@@ -1104,21 +1114,23 @@ class DocxGradingService
             'passed' => $alignPassed,
         ];
 
-        // Check First Line Indent (2.5 cm)
+        // STRICT MODE: Check First Line Indent - must match EXACTLY
         $totalChecks++;
         $expectedIndent = $rules['first_line_indent'] ?? 2.5; // cm
         $actualIndentTwips = $extracted['primary_indent'] ?? 0;
         // Convert twips to cm: 1 cm = 567 twips
         $actualIndentCm = $actualIndentTwips > 0 ? $actualIndentTwips / 567 : 0;
-        $indentPassed = abs($actualIndentCm - $expectedIndent) <= 0.3; // 0.3cm tolerance
+        // STRICT: Only allow 0.1cm tolerance for rounding errors
+        $indentPassed = abs($actualIndentCm - $expectedIndent) <= 0.1;
         if ($indentPassed)
             $passedCount++;
         $checks[] = [
             'element' => 'first_line_indent',
             'label' => 'ระยะย่อหน้าแรก',
-            'expected' => $expectedIndent . ' ซม.',
-            'actual' => $actualIndentCm > 0 ? round($actualIndentCm, 1) . ' ซม.' : 'ไม่พบ',
+            'expected' => $expectedIndent . ' ซม. (ต้องตรงเป๊ะ)',
+            'actual' => $actualIndentCm > 0 ? round($actualIndentCm, 2) . ' ซม.' : 'ไม่พบ',
             'passed' => $indentPassed,
+            'deduction' => $indentPassed ? 0 : 1,
         ];
 
         // Check Line Spacing (single = 1.0)
@@ -1152,39 +1164,51 @@ class DocxGradingService
             'passed' => $lineSpacingPassed,
         ];
 
-        // Check Header Labels (ส่วนราชการ, ที่, วันที่, เรื่อง) - must be bold, 20pt
+        // STRICT MODE: Check Header Labels - must be bold with EXACT size
         $headerLabels = $rules['header_labels'] ?? ['ส่วนราชการ', 'ที่', 'วันที่', 'เรื่อง'];
         $expectedHeaderSize = $rules['header_font_size'] ?? 20;
         $boldTextsForHeaders = $extracted['bold_texts'] ?? [];
 
         $foundLabels = [];
         $correctLabels = [];
+        $wrongLabels = [];
 
         foreach ($headerLabels as $label) {
             foreach ($boldTextsForHeaders as $boldItem) {
                 if (strpos($boldItem['text'], $label) !== false) {
                     $foundLabels[] = $label;
-                    // Check size (allow 2pt tolerance)
-                    if ($boldItem['size'] && abs($boldItem['size'] - $expectedHeaderSize) <= 2) {
+                    // STRICT: Header size must be EXACTLY the same - NO TOLERANCE
+                    if ($boldItem['size'] && $boldItem['size'] == $expectedHeaderSize) {
                         $correctLabels[] = $label;
+                    } else {
+                        $wrongLabels[] = $label . ' (' . ($boldItem['size'] ?? '?') . 'pt)';
                     }
                     break;
                 }
             }
         }
 
+        // STRICT: ALL headers must be correct
         $totalChecks++;
         $headersPassed = count($correctLabels) >= count($headerLabels);
         if ($headersPassed)
             $passedCount++;
+        
+        $actualMessage = 'ไม่พบหัวข้อ';
+        if (count($foundLabels) > 0) {
+            $actualMessage = 'พบ ' . count($correctLabels) . '/' . count($headerLabels) . ' หัวข้อถูกต้อง';
+            if (count($wrongLabels) > 0) {
+                $actualMessage .= ' (ผิด: ' . implode(', ', $wrongLabels) . ')';
+            }
+        }
+        
         $checks[] = [
             'element' => 'header_labels',
             'label' => 'หัวข้อเอกสาร (ส่วนราชการ/ที่/วันที่/เรื่อง)',
-            'expected' => 'ตัวหนา, ' . $expectedHeaderSize . ' pt',
-            'actual' => count($foundLabels) > 0
-                ? 'พบ ' . count($correctLabels) . '/' . count($headerLabels) . ' หัวข้อถูกต้อง'
-                : 'ไม่พบหัวข้อ',
+            'expected' => 'ตัวหนา, ' . $expectedHeaderSize . ' pt (ต้องตรงเป๊ะ)',
+            'actual' => $actualMessage,
             'passed' => $headersPassed,
+            'deduction' => $headersPassed ? 0 : count($headerLabels) - count($correctLabels),
         ];
 
         $score = $totalChecks > 0 ? round(($passedCount / $totalChecks) * 100, 2) : 0;

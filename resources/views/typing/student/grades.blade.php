@@ -157,10 +157,14 @@
                                     <p class="text-xs text-gray-500">ตรวจเมื่อ {{ $submission->updated_at->format('d M Y') }}
                                     </p>
                                     @if($submission->feedback)
-                                        <p class="text-sm text-gray-600 mt-1 bg-amber-50 p-2 rounded-lg border border-amber-100">
-                                            <i class="fas fa-comment-dots text-amber-500 mr-1"></i>
-                                            {{ $submission->feedback }}
-                                        </p>
+                                        <div
+                                            class="text-sm text-gray-600 mt-2 bg-gradient-to-r from-amber-50 to-orange-50 p-3 rounded-lg border border-amber-200">
+                                            <div class="flex items-start gap-2">
+                                                <i class="fas fa-clipboard-check text-amber-500 mt-0.5"></i>
+                                                <div class="flex-1 whitespace-pre-line font-mono text-xs leading-relaxed">
+                                                    {{ $submission->feedback }}</div>
+                                            </div>
+                                        </div>
                                     @endif
                                 </div>
                             </div>

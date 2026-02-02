@@ -599,9 +599,9 @@ class TypingAdminController extends Controller
                 $masterFilePath // Pass master file for formatting comparison
             );
 
-            // Build feedback message with character-level info
+            // Build STRICT MODE feedback message with character-level info
             $feedback = sprintf(
-                " ตรวจแล้ว\nความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
+                "🔒 ตรวจโหมดเข้มงวด (ต้องตรงกับต้นฉบับเป๊ะๆ)\n\n📝 ความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
                 $result['accuracy'],
                 $result['correct_chars'] ?? 0,
                 $result['total_chars'] ?? 0,
@@ -609,16 +609,47 @@ class TypingAdminController extends Controller
                 $result['total_words']
             );
 
+            // Show text accuracy issues if any
+            if ($result['accuracy'] < 100) {
+                $feedback .= sprintf("\n⚠️ พบตัวอักษรผิด/ขาด: %d ตัว", $result['wrong_chars'] ?? ($result['total_chars'] - ($result['correct_chars'] ?? 0)));
+            }
+
             if ($checkFormatting && isset($result['formatting'])) {
+                $totalDeductions = 0;
                 $feedback .= sprintf(
-                    "\n\n📐 ตรวจรูปแบบ: %.0f%%\n",
+                    "\n\n📐 ตรวจรูปแบบเอกสาร: %.0f%%\n",
                     $result['formatting_score']
                 );
+                $feedback .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+
                 foreach ($result['formatting']['checks'] as $check) {
                     $icon = $check['passed'] ? '✅' : '❌';
-                    $feedback .= "{$icon} {$check['label']}: {$check['actual']}\n";
+                    $deduction = $check['deduction'] ?? 0;
+                    $totalDeductions += $deduction;
+
+                    if ($check['passed']) {
+                        $feedback .= "{$icon} {$check['label']}: {$check['actual']}\n";
+                    } else {
+                        $feedback .= "{$icon} {$check['label']}\n";
+                        $feedback .= "   ต้องการ: {$check['expected']}\n";
+                        $feedback .= "   พบ: {$check['actual']}\n";
+                        if ($deduction > 0) {
+                            $feedback .= "   ❗ หักคะแนน: -{$deduction} รายการ\n";
+                        }
+                    }
                 }
-                $feedback .= sprintf("\n🎯 คะแนนรวม: %.1f/100", $result['combined_accuracy'] ?? $result['accuracy']);
+
+                $feedback .= "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+                $feedback .= sprintf(
+                    "📊 สรุป: ผ่าน %d/%d รายการ",
+                    $result['formatting']['passed'],
+                    $result['formatting']['total']
+                );
+                if ($totalDeductions > 0) {
+                    $feedback .= sprintf(" (หักรวม %d รายการ)", $totalDeductions);
+                }
+                $feedback .= sprintf("\n\n🎯 คะแนนรวม: %.1f/%d", $result['score'], $submission->assignment->max_score);
+                $feedback .= sprintf(" (ตัวอักษร 70%% + รูปแบบ 30%%)");
             }
 
             // Update submission with score
@@ -705,9 +736,9 @@ class TypingAdminController extends Controller
                     $masterFilePath
                 );
 
-                // Build feedback with character-level info
+                // Build STRICT MODE feedback with character-level info
                 $feedback = sprintf(
-                    "🤖 ตรวจอัตโนมัติ\nความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
+                    "🔒 ตรวจโหมดเข้มงวด (ต้องตรงกับต้นฉบับเป๊ะๆ)\n\n📝 ความแม่นยำตัวอักษร: %.2f%%\nตัวอักษรถูก: %d/%d ตัว\nคำถูก: %d/%d คำ",
                     $result['accuracy'],
                     $result['correct_chars'] ?? 0,
                     $result['total_chars'] ?? 0,
@@ -715,13 +746,47 @@ class TypingAdminController extends Controller
                     $result['total_words']
                 );
 
+                // Show text accuracy issues if any
+                if ($result['accuracy'] < 100) {
+                    $feedback .= sprintf("\n⚠️ พบตัวอักษรผิด/ขาด: %d ตัว", $result['wrong_chars'] ?? ($result['total_chars'] - ($result['correct_chars'] ?? 0)));
+                }
+
                 if ($checkFormatting && isset($result['formatting'])) {
-                    $feedback .= sprintf("\n\n📐 ตรวจรูปแบบ: %.0f%%", $result['formatting_score']);
+                    $totalDeductions = 0;
+                    $feedback .= sprintf("\n\n📐 ตรวจรูปแบบเอกสาร: %.0f%%", $result['formatting_score']);
+                    $feedback .= "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+
                     foreach ($result['formatting']['checks'] as $check) {
                         $icon = $check['passed'] ? '✅' : '❌';
-                        $feedback .= "\n{$icon} {$check['label']}: {$check['actual']}";
+                        $deduction = $check['deduction'] ?? 0;
+                        $totalDeductions += $deduction;
+
+                        if ($check['passed']) {
+                            $feedback .= "\n{$icon} {$check['label']}: {$check['actual']}";
+                        } else {
+                            $feedback .= "\n{$icon} {$check['label']}";
+                            $feedback .= "\n   ต้องการ: {$check['expected']}";
+                            $feedback .= "\n   พบ: {$check['actual']}";
+                            if ($deduction > 0) {
+                                $feedback .= "\n   ❗ หักคะแนน: -{$deduction} รายการ";
+                            }
+                        }
                     }
-                    $feedback .= sprintf("\n\n🎯 คะแนนรวม: %.1f/100", $result['combined_accuracy'] ?? $result['accuracy']);
+
+                    $feedback .= "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+                    $feedback .= sprintf(
+                        "\n📊 สรุป: ผ่าน %d/%d รายการ",
+                        $result['formatting']['passed'],
+                        $result['formatting']['total']
+                    );
+                    if ($totalDeductions > 0) {
+                        $feedback .= sprintf(" (หักรวม %d รายการ)", $totalDeductions);
+                    }
+                    $feedback .= sprintf(
+                        "\n\n🎯 คะแนนรวม: %.1f/%d (ตัวอักษร 70%% + รูปแบบ 30%%)",
+                        $result['score'],
+                        $assignment->max_score
+                    );
                 }
 
                 $submission->update([
