@@ -203,12 +203,37 @@ class TypingAdminController extends Controller
             ->paginate(50) // Increased per page for grades view
             ->withQueryString();
 
-        // Calculate summary stats (unfiltered or filtered? Usually unfiltered for summary)
-        $totalStudents = User::where('role', 'student')->count();
-        $allScores = TypingSubmission::whereNotNull('score')->pluck('score');
-        $averageScore = $allScores->avg() ?? 0;
-        $maxScore = $allScores->max() ?? 0;
-        $minScore = $allScores->min() ?? 0;
+        // Calculate summary stats (respecting filters for consistency)
+        $summaryStats = User::where('role', 'student')
+            ->withSum([
+                'typingSubmissions as student_total_score' => function ($q) {
+                    $q->whereNotNull('score');
+                }
+            ], 'score');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $summaryStats->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('student_id', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('class')) {
+            $summaryStats->where('class_name', $request->class);
+        }
+
+        $allStudentsData = $summaryStats->get();
+        $totalScoresList = $allStudentsData->pluck('student_total_score')->map(fn($s) => $s ?? 0);
+
+        $totalStudents = $allStudentsData->count();
+        $averageScore = $totalScoresList->avg() ?? 0;
+        $maxScore = $totalScoresList->max() ?? 0;
+        $minScore = $totalScoresList->min() ?? 0;
+
+        // Calculate passing rate (passing = total score > 50)
+        $passingStudents = $totalScoresList->filter(fn($score) => $score > 50)->count();
+        $passingRate = $totalStudents > 0 ? round(($passingStudents / $totalStudents) * 100) : 0;
 
         // Get assignments for columns
         $assignments = TypingAssignment::select('id', 'title', 'max_score')
@@ -222,20 +247,6 @@ class TypingAdminController extends Controller
             ->distinct()
             ->orderBy('class_name')
             ->pluck('class_name');
-
-        // Calculate passing rate (passing = avg score >= 50%)
-        $passingStudents = User::where('role', 'student')
-            ->whereHas('typingSubmissions', function ($q) {
-                $q->whereNotNull('score');
-            })
-            ->withAvg('typingSubmissions', 'score')
-            ->get()
-            ->filter(function ($student) {
-                return ($student->typing_submissions_avg_score ?? 0) >= 50;
-            })
-            ->count();
-
-        $passingRate = $totalStudents > 0 ? round(($passingStudents / $totalStudents) * 100) : 0;
 
         return view('typing.admin.grades', compact(
             'students',

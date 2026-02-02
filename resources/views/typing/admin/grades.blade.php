@@ -54,19 +54,19 @@
         </div>
         <div class="card p-4 text-center">
             <p class="text-3xl font-bold text-primary-600">{{ number_format($averageScore, 1) }}</p>
-            <p class="text-sm text-gray-500">คะแนนเฉลี่ย</p>
+            <p class="text-sm text-gray-500">คะแนนรวมเฉลี่ย</p>
         </div>
         <div class="card p-4 text-center">
             <p class="text-3xl font-bold text-secondary-600">{{ number_format($maxScore, 1) }}</p>
-            <p class="text-sm text-gray-500">คะแนนสูงสุด</p>
+            <p class="text-sm text-gray-500">คะแนนรวมสูงสุด</p>
         </div>
         <div class="card p-4 text-center">
             <p class="text-3xl font-bold text-red-600">{{ number_format($minScore, 1) }}</p>
-            <p class="text-sm text-gray-500">คะแนนต่ำสุด</p>
+            <p class="text-sm text-gray-500">คะแนนรวมต่ำสุด</p>
         </div>
         <div class="card p-4 text-center">
             <p class="text-3xl font-bold text-amber-600">{{ $passingRate }}%</p>
-            <p class="text-sm text-gray-500">ผ่านเกณฑ์</p>
+            <p class="text-sm text-gray-500">ผ่านเกณฑ์ (>50)</p>
         </div>
     </div>
 
