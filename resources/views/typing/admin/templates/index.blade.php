@@ -139,7 +139,7 @@
                 <div
                     class="relative h-40 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
                     @if($template->thumbnail)
-                        <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}"
+                        <img src="{{ asset('uploads/' . $template->thumbnail) }}" alt="{{ $template->title }}"
                             class="w-full h-full object-cover">
                     @else
                         <div class="text-center">

@@ -72,14 +72,14 @@ class TemplateLibraryController extends Controller
 
         // Generate unique file path
         $storagePath = 'templates/' . Str::uuid() . '.' . $fileExtension;
-        Storage::disk('public')->put($storagePath, file_get_contents($file));
+        Storage::disk('uploads')->put($storagePath, file_get_contents($file));
 
         // Handle thumbnail upload
         $thumbnailPath = null;
         if ($request->hasFile('thumbnail')) {
             $thumbnail = $request->file('thumbnail');
             $thumbnailPath = 'templates/thumbnails/' . Str::uuid() . '.' . $thumbnail->getClientOriginalExtension();
-            Storage::disk('public')->put($thumbnailPath, file_get_contents($thumbnail));
+            Storage::disk('uploads')->put($thumbnailPath, file_get_contents($thumbnail));
         }
 
         DocumentTemplate::create([
@@ -136,13 +136,13 @@ class TemplateLibraryController extends Controller
         // Handle new file upload
         if ($request->hasFile('file')) {
             // Delete old file
-            if ($template->file_path && Storage::disk('public')->exists($template->file_path)) {
-                Storage::disk('public')->delete($template->file_path);
+            if ($template->file_path && Storage::disk('uploads')->exists($template->file_path)) {
+                Storage::disk('uploads')->delete($template->file_path);
             }
 
             $file = $request->file('file');
             $storagePath = 'templates/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
-            Storage::disk('public')->put($storagePath, file_get_contents($file));
+            Storage::disk('uploads')->put($storagePath, file_get_contents($file));
 
             $template->file_path = $storagePath;
             $template->file_name = $file->getClientOriginalName();
@@ -153,13 +153,13 @@ class TemplateLibraryController extends Controller
         // Handle new thumbnail upload
         if ($request->hasFile('thumbnail')) {
             // Delete old thumbnail
-            if ($template->thumbnail && Storage::disk('public')->exists($template->thumbnail)) {
-                Storage::disk('public')->delete($template->thumbnail);
+            if ($template->thumbnail && Storage::disk('uploads')->exists($template->thumbnail)) {
+                Storage::disk('uploads')->delete($template->thumbnail);
             }
 
             $thumbnail = $request->file('thumbnail');
             $thumbnailPath = 'templates/thumbnails/' . Str::uuid() . '.' . $thumbnail->getClientOriginalExtension();
-            Storage::disk('public')->put($thumbnailPath, file_get_contents($thumbnail));
+            Storage::disk('uploads')->put($thumbnailPath, file_get_contents($thumbnail));
             $template->thumbnail = $thumbnailPath;
         }
 
@@ -177,11 +177,11 @@ class TemplateLibraryController extends Controller
         $template = DocumentTemplate::findOrFail($id);
 
         // Delete files
-        if ($template->file_path && Storage::disk('public')->exists($template->file_path)) {
-            Storage::disk('public')->delete($template->file_path);
+        if ($template->file_path && Storage::disk('uploads')->exists($template->file_path)) {
+            Storage::disk('uploads')->delete($template->file_path);
         }
-        if ($template->thumbnail && Storage::disk('public')->exists($template->thumbnail)) {
-            Storage::disk('public')->delete($template->thumbnail);
+        if ($template->thumbnail && Storage::disk('uploads')->exists($template->thumbnail)) {
+            Storage::disk('uploads')->delete($template->thumbnail);
         }
 
         $template->delete();
@@ -249,7 +249,7 @@ class TemplateLibraryController extends Controller
 
         $template->incrementDownload();
 
-        $filePath = storage_path('app/public/' . $template->file_path);
+        $filePath = public_path('uploads/' . $template->file_path);
 
         if (!file_exists($filePath)) {
             abort(404, 'ไม่พบไฟล์');

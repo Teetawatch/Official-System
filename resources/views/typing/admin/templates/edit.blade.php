@@ -121,7 +121,7 @@
                     @if($template->thumbnail)
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                             <p class="text-sm font-semibold text-gray-700 mb-2">รูปปกปัจจุบัน</p>
-                            <img src="{{ asset('storage/' . $template->thumbnail) }}" alt=""
+                            <img src="{{ asset('uploads/' . $template->thumbnail) }}" alt=""
                                 class="w-full h-32 object-cover rounded-lg">
                         </div>
                     @endif

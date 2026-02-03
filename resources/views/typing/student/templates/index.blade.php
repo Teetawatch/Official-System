@@ -70,7 +70,7 @@
                         <!-- Thumbnail -->
                         <div class="relative h-56 flex items-center justify-center overflow-hidden">
                             @if($template->thumbnail)
-                                <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}" 
+                                <img src="{{ asset('uploads/' . $template->thumbnail) }}" alt="{{ $template->title }}" 
                                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                             @else
                                 <div class="text-center group-hover:scale-110 transition-transform duration-500">
@@ -163,10 +163,10 @@
                class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-violet-200 hover:-translate-y-1 transition-all duration-300">
                 <!-- Thumbnail -->
                 <div class="relative h-48 bg-slate-50 flex items-center justify-center overflow-hidden">
-                    @if($template->thumbnail)
-                        <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}" 
-                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                    @else
+                            @if($template->thumbnail)
+                                <img src="{{ asset('uploads/' . $template->thumbnail) }}" alt="{{ $template->title }}" 
+                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            @else
                         <div class="text-center group-hover:scale-110 transition-transform duration-500">
                             @php
                                 $iconClass = match(strtolower($template->file_type)) {

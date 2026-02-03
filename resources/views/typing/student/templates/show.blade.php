@@ -22,7 +22,7 @@
                     </div>
 
                     @if($template->thumbnail)
-                        <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}"
+                        <img src="{{ asset('uploads/' . $template->thumbnail) }}" alt="{{ $template->title }}"
                             class="relative z-10 w-auto h-full max-h-[80%] object-contain drop-shadow-2xl transition-transform duration-700 hover:scale-105">
                     @else
                         <div class="relative z-10 text-center group">
