@@ -27,7 +27,7 @@ class TemplateLibraryController extends Controller
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
-        $templates = $query->paginate(12)->withQueryString();
+        $templates = $query->paginate(12)->appends(request()->query());
         $categories = DocumentTemplate::getCategories();
 
         // Statistics
@@ -64,22 +64,35 @@ class TemplateLibraryController extends Controller
             'is_featured' => 'boolean',
         ]);
 
+        // Ensure directories exist
+        $templatesPath = public_path('uploads/templates');
+        $thumbnailsPath = public_path('uploads/templates/thumbnails');
+
+        if (!file_exists($templatesPath)) {
+            mkdir($templatesPath, 0755, true);
+        }
+        if (!file_exists($thumbnailsPath)) {
+            mkdir($thumbnailsPath, 0755, true);
+        }
+
         // Handle file upload
         $file = $request->file('file');
         $fileName = $file->getClientOriginalName();
         $fileExtension = $file->getClientOriginalExtension();
         $fileSize = $file->getSize();
 
-        // Generate unique file path
-        $storagePath = 'templates/' . Str::uuid() . '.' . $fileExtension;
-        Storage::disk('uploads')->put($storagePath, file_get_contents($file));
+        // Generate unique file name and move it
+        $uniqueFileName = Str::uuid() . '.' . $fileExtension;
+        $file->move($templatesPath, $uniqueFileName);
+        $storagePath = 'templates/' . $uniqueFileName;
 
         // Handle thumbnail upload
         $thumbnailPath = null;
         if ($request->hasFile('thumbnail')) {
             $thumbnail = $request->file('thumbnail');
-            $thumbnailPath = 'templates/thumbnails/' . Str::uuid() . '.' . $thumbnail->getClientOriginalExtension();
-            Storage::disk('uploads')->put($thumbnailPath, file_get_contents($thumbnail));
+            $uniqueThumbName = Str::uuid() . '.' . $thumbnail->getClientOriginalExtension();
+            $thumbnail->move($thumbnailsPath, $uniqueThumbName);
+            $thumbnailPath = 'templates/thumbnails/' . $uniqueThumbName;
         }
 
         DocumentTemplate::create([
@@ -133,18 +146,29 @@ class TemplateLibraryController extends Controller
         $template->is_featured = $request->boolean('is_featured');
         $template->is_active = $request->boolean('is_active');
 
+        // Ensure directories exist
+        $templatesPath = public_path('uploads/templates');
+        $thumbnailsPath = public_path('uploads/templates/thumbnails');
+
+        if (!file_exists($templatesPath)) {
+            mkdir($templatesPath, 0755, true);
+        }
+        if (!file_exists($thumbnailsPath)) {
+            mkdir($thumbnailsPath, 0755, true);
+        }
+
         // Handle new file upload
         if ($request->hasFile('file')) {
             // Delete old file
-            if ($template->file_path && Storage::disk('uploads')->exists($template->file_path)) {
-                Storage::disk('uploads')->delete($template->file_path);
+            if ($template->file_path && file_exists(public_path('uploads/' . $template->file_path))) {
+                unlink(public_path('uploads/' . $template->file_path));
             }
 
             $file = $request->file('file');
-            $storagePath = 'templates/' . Str::uuid() . '.' . $file->getClientOriginalExtension();
-            Storage::disk('uploads')->put($storagePath, file_get_contents($file));
+            $uniqueFileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $file->move($templatesPath, $uniqueFileName);
 
-            $template->file_path = $storagePath;
+            $template->file_path = 'templates/' . $uniqueFileName;
             $template->file_name = $file->getClientOriginalName();
             $template->file_type = $file->getClientOriginalExtension();
             $template->file_size = $file->getSize();
@@ -153,14 +177,14 @@ class TemplateLibraryController extends Controller
         // Handle new thumbnail upload
         if ($request->hasFile('thumbnail')) {
             // Delete old thumbnail
-            if ($template->thumbnail && Storage::disk('uploads')->exists($template->thumbnail)) {
-                Storage::disk('uploads')->delete($template->thumbnail);
+            if ($template->thumbnail && file_exists(public_path('uploads/' . $template->thumbnail))) {
+                unlink(public_path('uploads/' . $template->thumbnail));
             }
 
             $thumbnail = $request->file('thumbnail');
-            $thumbnailPath = 'templates/thumbnails/' . Str::uuid() . '.' . $thumbnail->getClientOriginalExtension();
-            Storage::disk('uploads')->put($thumbnailPath, file_get_contents($thumbnail));
-            $template->thumbnail = $thumbnailPath;
+            $uniqueThumbName = Str::uuid() . '.' . $thumbnail->getClientOriginalExtension();
+            $thumbnail->move($thumbnailsPath, $uniqueThumbName);
+            $template->thumbnail = 'templates/thumbnails/' . $uniqueThumbName;
         }
 
         $template->save();
@@ -177,11 +201,11 @@ class TemplateLibraryController extends Controller
         $template = DocumentTemplate::findOrFail($id);
 
         // Delete files
-        if ($template->file_path && Storage::disk('uploads')->exists($template->file_path)) {
-            Storage::disk('uploads')->delete($template->file_path);
+        if ($template->file_path && file_exists(public_path('uploads/' . $template->file_path))) {
+            unlink(public_path('uploads/' . $template->file_path));
         }
-        if ($template->thumbnail && Storage::disk('uploads')->exists($template->thumbnail)) {
-            Storage::disk('uploads')->delete($template->thumbnail);
+        if ($template->thumbnail && file_exists(public_path('uploads/' . $template->thumbnail))) {
+            unlink(public_path('uploads/' . $template->thumbnail));
         }
 
         $template->delete();
@@ -210,7 +234,7 @@ class TemplateLibraryController extends Controller
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
-        $templates = $query->paginate(12)->withQueryString();
+        $templates = $query->paginate(12)->appends(request()->query());
         $categories = DocumentTemplate::getCategories();
         $featuredTemplates = DocumentTemplate::active()->featured()->take(3)->get();
 
