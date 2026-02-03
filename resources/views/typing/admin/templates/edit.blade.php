@@ -121,7 +121,7 @@
                     @if($template->thumbnail)
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
                             <p class="text-sm font-semibold text-gray-700 mb-2">รูปปกปัจจุบัน</p>
-                            <img src="{{ Storage::url($template->thumbnail) }}" alt=""
+                            <img src="{{ asset('storage/' . $template->thumbnail) }}" alt=""
                                 class="w-full h-32 object-cover rounded-lg">
                         </div>
                     @endif
@@ -154,7 +154,8 @@
                         <div class="grid grid-cols-2 gap-4 text-center">
                             <div>
                                 <p class="text-2xl font-bold text-violet-600">
-                                    {{ number_format($template->download_count) }}</p>
+                                    {{ number_format($template->download_count) }}
+                                </p>
                                 <p class="text-xs text-violet-500">ดาวน์โหลด</p>
                             </div>
                             <div>

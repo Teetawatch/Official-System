@@ -1,22 +1,46 @@
 <x-typing-app :role="'student'" :title="'คลังเอกสารตัวอย่าง - ระบบวิชาพิมพ์หนังสือราชการ 1'">
     
     <!-- Hero Section -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 shadow-xl mb-10 text-white">
-        <div class="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-white opacity-10 blur-3xl"></div>
-        <div class="absolute bottom-0 left-1/4 w-48 h-48 rounded-full bg-pink-400 opacity-20 blur-2xl"></div>
-        <div class="absolute top-1/3 right-1/3 w-32 h-32 rounded-full bg-cyan-400 opacity-15 blur-xl"></div>
+    <div class="relative overflow-hidden rounded-[2.5rem] bg-[#0f172a] shadow-2xl mb-12 group">
+        <!-- Animated Background Elements -->
+        <div class="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] rounded-full bg-gradient-to-br from-violet-600/20 to-purple-600/20 blur-[100px] animate-pulse"></div>
+        <div class="absolute bottom-[-10%] left-[5%] w-[300px] h-[300px] rounded-full bg-gradient-to-tr from-indigo-600/20 to-cyan-600/20 blur-[80px] animate-pulse" style="animation-delay: 2s"></div>
         
-        <div class="relative z-10 px-8 py-12 md:py-16">
-            <div class="max-w-3xl">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-sm font-medium border border-white/10 flex items-center gap-2">
-                        <i class="fas fa-book-open"></i> Template Library
+        <div class="relative z-10 px-10 py-16 md:py-20 flex flex-col md:flex-row items-center justify-between gap-12">
+            <div class="max-w-2xl">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-sm font-medium mb-6 backdrop-blur-md">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
                     </span>
+                    Template Library
                 </div>
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">คลังเอกสารตัวอย่าง</h1>
-                <p class="text-violet-100 text-lg md:text-xl max-w-2xl">
-                    ศึกษารูปแบบการพิมพ์หนังสือราชการที่ถูกต้องจากเอกสารตัวอย่างคุณภาพ เพื่อพัฒนาทักษะการพิมพ์ของคุณ
+                <h1 class="text-5xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+                    คลังเอกสาร <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 font-black">ตัวอย่าง</span>
+                </h1>
+                <p class="text-slate-400 text-lg md:text-xl leading-relaxed">
+                    ยกระดับทักษะการพิมพ์หนังสือราชการของคุณด้วยเอกสารต้นแบบที่ถูกต้อง 
+                    คัดสรรมาเพื่อการเรียนรู้ที่มีประสิทธิภาพสูงสุด
                 </p>
+                <div class="mt-10 flex flex-wrap gap-4">
+                    <div class="flex -space-x-3 overflow-hidden">
+                        <div class="inline-block h-10 w-10 rounded-full ring-2 ring-slate-900 bg-violet-500 flex items-center justify-center text-xs font-bold text-white">100+</div>
+                        <div class="inline-block h-10 w-10 rounded-full ring-2 ring-slate-900 bg-indigo-500 flex items-center justify-center text-xs font-bold text-white">PDF</div>
+                        <div class="inline-block h-10 w-10 rounded-full ring-2 ring-slate-900 bg-blue-500 flex items-center justify-center text-xs font-bold text-white">DOCX</div>
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-400 text-sm">
+                        <span class="font-bold text-white">แหล่งรวม</span> เอกสารที่สมบูรณ์ที่สุด
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hidden lg:block relative">
+                <div class="relative w-64 h-64 bg-gradient-to-br from-violet-500 to-purple-700 rounded-3xl rotate-12 shadow-2xl flex items-center justify-center overflow-hidden group-hover:rotate-6 transition-transform duration-500">
+                    <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+                    <i class="fas fa-file-invoice text-7xl text-white opacity-40"></i>
+                    <div class="absolute -bottom-4 -right-4 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+                </div>
+                <div class="absolute -top-10 -left-10 w-48 h-48 bg-violet-600/30 rounded-full blur-3xl -z-10"></div>
             </div>
         </div>
     </div>
@@ -39,46 +63,50 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 @foreach($featuredTemplates as $template)
                     <a href="{{ route('typing.student.templates.show', $template) }}" 
-                       class="group relative bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:border-violet-200 hover:-translate-y-1 transition-all duration-300">
-                        <!-- Featured Badge -->
-                        <div class="absolute top-4 left-4 z-10">
-                            <span class="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full shadow-lg flex items-center gap-1">
-                                <i class="fas fa-star"></i> แนะนำ
-                            </span>
-                        </div>
+                       class="group relative bg-[#1e293b] rounded-3xl shadow-2xl overflow-hidden hover:-translate-y-2 transition-all duration-500 border border-slate-800">
+                        <!-- Glow Effect -->
+                        <div class="absolute inset-0 bg-gradient-to-br from-violet-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
                         <!-- Thumbnail -->
-                        <div class="relative h-44 bg-gradient-to-br from-violet-100 to-purple-50 flex items-center justify-center overflow-hidden">
+                        <div class="relative h-56 flex items-center justify-center overflow-hidden">
                             @if($template->thumbnail)
-                                <img src="{{ Storage::url($template->thumbnail) }}" alt="{{ $template->title }}" 
-                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}" 
+                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                             @else
-                                <div class="text-center">
-                                    @php
-                                        $iconClass = match(strtolower($template->file_type)) {
-                                            'pdf' => 'fa-file-pdf text-red-400',
-                                            'doc', 'docx' => 'fa-file-word text-blue-400',
-                                            default => 'fa-file text-gray-400'
-                                        };
-                                    @endphp
-                                    <i class="fas {{ $iconClass }} text-6xl mb-2 group-hover:scale-110 transition-transform duration-300"></i>
+                                <div class="text-center group-hover:scale-110 transition-transform duration-500">
+                                    <i class="fas fa-file-invoice text-white/10 text-8xl mb-2"></i>
+                                    <p class="text-[10px] text-white/20 uppercase font-black tracking-widest">{{ $template->file_type }}</p>
                                 </div>
                             @endif
+                            <!-- Glass Overlay -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#1e293b] via-[#1e293b]/20 to-transparent"></div>
+                            
+                            <!-- Badges -->
+                            <div class="absolute top-4 left-4 z-10">
+                                <span class="px-3 py-1.5 bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 text-[10px] font-black uppercase rounded-lg shadow-xl flex items-center gap-1.5 border border-white/20">
+                                    <i class="fas fa-star"></i> Featured
+                                </span>
+                            </div>
                         </div>
-
+                        
                         <!-- Content -->
-                        <div class="p-5">
-                            <span class="inline-block px-2.5 py-1 bg-violet-100 text-violet-700 text-xs font-semibold rounded-lg mb-3">
+                        <div class="relative p-6 -mt-12 backdrop-blur-md bg-white/5 border-t border-white/10 mx-4 mb-4 rounded-2xl">
+                            <span class="inline-block px-2.5 py-1 bg-violet-500/20 text-violet-300 text-[10px] font-black uppercase rounded-md mb-3 border border-violet-500/30">
                                 {{ $template->category }}
                             </span>
-                            <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-violet-600 transition-colors">{{ $template->title }}</h3>
+                            <h3 class="font-bold text-white mb-2 line-clamp-2 min-h-[48px] leading-tight">{{ $template->title }}</h3>
                             
-                            <div class="flex items-center justify-between text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100">
-                                <span class="flex items-center gap-1">
-                                    <i class="fas fa-download"></i> {{ number_format($template->download_count) }}
-                                </span>
-                                <span class="flex items-center gap-1">
-                                    <i class="fas fa-hdd"></i> {{ $template->formatted_file_size }}
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-4 pt-4 border-t border-white/5">
+                                <div class="flex items-center gap-3">
+                                    <span class="flex items-center gap-1.5">
+                                        <i class="fas fa-download text-violet-400"></i> {{ number_format($template->download_count) }}
+                                    </span>
+                                    <span class="flex items-center gap-1.5">
+                                        <i class="fas fa-hdd text-blue-400"></i> {{ $template->formatted_file_size }}
+                                    </span>
+                                </div>
+                                <span class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white group-hover:bg-violet-500 transition-colors">
+                                    <i class="fas fa-arrow-right text-[10px]"></i>
                                 </span>
                             </div>
                         </div>
@@ -89,32 +117,31 @@
     @endif
 
     <!-- Filter & Search -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-        <form method="GET" class="flex flex-col md:flex-row gap-4">
-            <div class="flex-1">
-                <div class="relative">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" name="search" value="{{ request('search') }}" 
-                           placeholder="ค้นหาเอกสารตัวอย่าง..." 
-                           class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 transition-all">
-                </div>
+    <div class="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/50 border border-white p-4 mb-12 sticky top-4 z-40">
+        <form method="GET" class="flex flex-col lg:flex-row gap-3">
+            <div class="flex-1 relative group">
+                <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors"></i>
+                <input type="text" name="search" value="{{ request('search') }}" 
+                       placeholder="ค้นหาเอกสารตัวอย่าง..." 
+                       class="w-full pl-14 pr-4 py-4 rounded-2xl border-0 bg-slate-100/50 focus:bg-white focus:ring-4 focus:ring-violet-500/10 transition-all text-slate-700 placeholder:text-slate-400">
             </div>
-            <div class="w-full md:w-64">
-                <select name="category" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-200 transition-all">
-                    <option value="">-- ทุกหมวดหมู่ --</option>
+            <div class="w-full lg:w-72 relative">
+                <i class="fas fa-th-large absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <select name="category" class="w-full pl-14 pr-10 py-4 rounded-2xl border-0 bg-slate-100/50 focus:bg-white focus:ring-4 focus:ring-violet-500/10 transition-all text-slate-700 appearance-none">
+                    <option value="">ทุกหมวดหมู่</option>
                     @foreach($categories as $key => $value)
                         <option value="{{ $key }}" {{ request('category') == $key ? 'selected' : '' }}>{{ $value }}</option>
                     @endforeach
                 </select>
+                <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs"></i>
             </div>
-            <button type="submit" class="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2">
-                <i class="fas fa-search"></i>
+            <button type="submit" class="px-8 py-4 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-2xl shadow-lg shadow-violet-200 hover:shadow-violet-300 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-3 min-w-[140px]">
+                <i class="fas fa-search text-sm"></i>
                 <span>ค้นหา</span>
             </button>
             @if(request('search') || request('category'))
-                <a href="{{ route('typing.student.templates.index') }}" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2">
+                <a href="{{ route('typing.student.templates.index') }}" class="px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-2xl transition-all flex items-center justify-center gap-2">
                     <i class="fas fa-times"></i>
-                    <span>ล้าง</span>
                 </a>
             @endif
         </form>
@@ -135,36 +162,39 @@
             <a href="{{ route('typing.student.templates.show', $template) }}" 
                class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg hover:border-violet-200 hover:-translate-y-1 transition-all duration-300">
                 <!-- Thumbnail -->
-                <div class="relative h-40 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
+                <div class="relative h-48 bg-slate-50 flex items-center justify-center overflow-hidden">
                     @if($template->thumbnail)
-                        <img src="{{ Storage::url($template->thumbnail) }}" alt="{{ $template->title }}" 
-                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                     @else
-                        <div class="text-center">
+                        <div class="text-center group-hover:scale-110 transition-transform duration-500">
                             @php
                                 $iconClass = match(strtolower($template->file_type)) {
-                                    'pdf' => 'fa-file-pdf text-red-400',
-                                    'doc', 'docx' => 'fa-file-word text-blue-400',
-                                    default => 'fa-file text-gray-400'
+                                    'pdf' => 'fa-file-pdf text-red-500/20',
+                                    'doc', 'docx' => 'fa-file-word text-blue-500/20',
+                                    default => 'fa-file text-slate-300'
                                 };
                             @endphp
-                            <i class="fas {{ $iconClass }} text-5xl mb-2 group-hover:scale-110 transition-transform duration-300"></i>
-                            <p class="text-xs text-gray-400 uppercase font-semibold">{{ $template->file_type }}</p>
+                            <i class="fas {{ $iconClass }} text-7xl mb-2"></i>
+                            <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest">{{ $template->file_type }}</p>
                         </div>
                     @endif
 
+                    <!-- Glass Overlays -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
                     <!-- Featured Badge -->
                     @if($template->is_featured)
-                        <div class="absolute top-3 left-3">
-                            <span class="px-2 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1">
-                                <i class="fas fa-star text-[10px]"></i> แนะนำ
+                        <div class="absolute top-4 left-4">
+                            <span class="px-2.5 py-1.5 bg-amber-400 text-amber-950 text-[10px] font-black uppercase rounded-lg shadow-lg flex items-center gap-1 backdrop-blur-md border border-amber-300/50">
+                                <i class="fas fa-star"></i> Featured
                             </span>
                         </div>
                     @endif
 
                     <!-- Category Badge -->
-                    <div class="absolute top-3 right-3">
-                        <span class="px-2 py-1 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium rounded-lg shadow-sm">
+                    <div class="absolute top-4 right-4 translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        <span class="px-2.5 py-1.5 bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase rounded-lg border border-white/30">
                             {{ $template->category }}
                         </span>
                     </div>
@@ -196,12 +226,12 @@
             </a>
         @empty
             <div class="col-span-full">
-                <div class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                        <i class="fas fa-folder-open text-4xl"></i>
+                <div class="text-center py-20 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">
+                    <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200 shadow-inner">
+                        <i class="fas fa-folder-open text-5xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-600 mb-2">ไม่พบเอกสารตัวอย่าง</h3>
-                    <p class="text-gray-400">{{ request('search') || request('category') ? 'ลองเปลี่ยนเงื่อนไขการค้นหา' : 'ยังไม่มีเอกสารตัวอย่างในระบบ' }}</p>
+                    <h3 class="text-xl font-bold text-slate-700 mb-2">ไม่พบเอกสารที่ค้นหา</h3>
+                    <p class="text-slate-400 max-w-sm mx-auto">{{ request('search') || request('category') ? 'ลองเปลี่ยนชื่อเอกสารหรือหมวดหมู่ในการค้นหาอีกครั้ง' : 'ขณะนี้ยังไม่มีเอกสารตัวอย่างให้ดาวน์โหลด' }}</p>
                 </div>
             </div>
         @endforelse

@@ -15,36 +15,50 @@
             <!-- Document Card -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
                 <!-- Header with Thumbnail -->
-                <div
-                    class="relative h-64 md:h-80 bg-gradient-to-br from-violet-100 via-purple-50 to-indigo-100 flex items-center justify-center overflow-hidden">
+                <div class="relative h-72 md:h-[400px] bg-slate-50 flex items-center justify-center overflow-hidden">
+                    <!-- Dynamic Background -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5"></div>
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-violet-500/5 rounded-full blur-3xl -mr-32 -mt-32">
+                    </div>
+
                     @if($template->thumbnail)
-                        <img src="{{ Storage::url($template->thumbnail) }}" alt="{{ $template->title }}"
-                            class="w-full h-full object-contain p-4">
+                        <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}"
+                            class="relative z-10 w-auto h-full max-h-[80%] object-contain drop-shadow-2xl transition-transform duration-700 hover:scale-105">
                     @else
-                        <div class="text-center">
+                        <div class="relative z-10 text-center group">
                             @php
                                 $iconClass = match (strtolower($template->file_type)) {
-                                    'pdf' => 'fa-file-pdf text-red-400',
-                                    'doc', 'docx' => 'fa-file-word text-blue-400',
-                                    default => 'fa-file text-gray-400'
+                                    'pdf' => 'fa-file-pdf text-red-500/20',
+                                    'doc', 'docx' => 'fa-file-word text-blue-500/20',
+                                    default => 'fa-file text-slate-300'
+                                };
+                                $accentColor = match (strtolower($template->file_type)) {
+                                    'pdf' => 'text-red-500',
+                                    'doc', 'docx' => 'text-blue-500',
+                                    default => 'text-slate-500'
                                 };
                             @endphp
-                            <i class="fas {{ $iconClass }} text-8xl mb-4"></i>
-                            <p class="text-sm text-gray-500 uppercase font-semibold tracking-wider">
-                                {{ $template->file_type }}</p>
+                            <div class="relative flex items-center justify-center mb-6">
+                                <i
+                                    class="fas {{ $iconClass }} text-9xl transition-transform duration-500 group-hover:scale-110"></i>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span
+                                        class="text-2xl font-black {{ $accentColor }} uppercase tracking-widest opacity-60">{{ $template->file_type }}</span>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
-                    <!-- Badges -->
-                    <div class="absolute top-4 left-4 flex flex-wrap gap-2">
+                    <!-- Badges Overlay -->
+                    <div class="absolute top-6 left-6 flex flex-wrap gap-3 z-20">
                         @if($template->is_featured)
                             <span
-                                class="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold rounded-full shadow-lg flex items-center gap-1">
-                                <i class="fas fa-star"></i> เอกสารแนะนำ
+                                class="px-3.5 py-2 bg-amber-400 text-amber-950 text-xs font-black uppercase rounded-xl shadow-lg border border-amber-300/50 flex items-center gap-2 backdrop-blur-md">
+                                <i class="fas fa-star text-[10px]"></i> Featured Template
                             </span>
                         @endif
                         <span
-                            class="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-gray-700 text-sm font-medium rounded-full shadow">
+                            class="px-3.5 py-2 bg-white/20 backdrop-blur-md text-slate-700 text-xs font-bold uppercase rounded-xl shadow-sm border border-white/40">
                             {{ $template->category }}
                         </span>
                     </div>
@@ -61,23 +75,43 @@
                     @endif
 
                     <!-- Info Grid -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 p-4 bg-gray-50 rounded-xl">
-                        <div class="text-center p-3">
-                            <p class="text-2xl font-bold text-violet-600">{{ number_format($template->download_count) }}
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+                        <div
+                            class="bg-slate-50 rounded-[1.5rem] p-5 text-center border border-slate-100/50 group hover:border-violet-200 hover:bg-violet-50/30 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-white rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                                <i class="fas fa-download text-violet-500 text-sm"></i>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800">{{ number_format($template->download_count) }}
                             </p>
-                            <p class="text-xs text-gray-500 mt-1">ดาวน์โหลด</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Downloads</p>
                         </div>
-                        <div class="text-center p-3">
-                            <p class="text-2xl font-bold text-violet-600">{{ number_format($template->view_count) }}</p>
-                            <p class="text-xs text-gray-500 mt-1">เข้าชม</p>
+                        <div
+                            class="bg-slate-50 rounded-[1.5rem] p-5 text-center border border-slate-100/50 group hover:border-pink-200 hover:bg-pink-50/30 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-white rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                                <i class="fas fa-eye text-pink-500 text-sm"></i>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800">{{ number_format($template->view_count) }}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Views</p>
                         </div>
-                        <div class="text-center p-3">
-                            <p class="text-2xl font-bold text-violet-600">{{ strtoupper($template->file_type) }}</p>
-                            <p class="text-xs text-gray-500 mt-1">ประเภทไฟล์</p>
+                        <div
+                            class="bg-slate-50 rounded-[1.5rem] p-5 text-center border border-slate-100/50 group hover:border-blue-200 hover:bg-blue-50/30 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-white rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                                <i class="fas fa-file-code text-blue-500 text-sm"></i>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800">{{ strtoupper($template->file_type) }}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Format</p>
                         </div>
-                        <div class="text-center p-3">
-                            <p class="text-2xl font-bold text-violet-600">{{ $template->formatted_file_size }}</p>
-                            <p class="text-xs text-gray-500 mt-1">ขนาดไฟล์</p>
+                        <div
+                            class="bg-slate-50 rounded-[1.5rem] p-5 text-center border border-slate-100/50 group hover:border-indigo-200 hover:bg-indigo-50/30 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-white rounded-xl flex items-center justify-center mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                                <i class="fas fa-weight-hanging text-indigo-500 text-sm"></i>
+                            </div>
+                            <p class="text-2xl font-black text-slate-800">{{ $template->formatted_file_size }}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">File Size</p>
                         </div>
                     </div>
 
@@ -197,7 +231,8 @@
                                 <div class="flex-1 min-w-0">
                                     <p
                                         class="text-sm font-medium text-gray-700 group-hover:text-violet-600 transition-colors truncate">
-                                        {{ $related->title }}</p>
+                                        {{ $related->title }}
+                                    </p>
                                     <p class="text-xs text-gray-400">{{ $related->formatted_file_size }}</p>
                                 </div>
                                 <i

@@ -139,7 +139,7 @@
                 <div
                     class="relative h-40 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
                     @if($template->thumbnail)
-                        <img src="{{ Storage::url($template->thumbnail) }}" alt="{{ $template->title }}"
+                        <img src="{{ asset('storage/' . $template->thumbnail) }}" alt="{{ $template->title }}"
                             class="w-full h-full object-cover">
                     @else
                         <div class="text-center">
@@ -182,7 +182,8 @@
                 <!-- Content -->
                 <div class="p-5">
                     <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 group-hover:text-violet-600 transition-colors">
-                        {{ $template->title }}</h3>
+                        {{ $template->title }}
+                    </h3>
 
                     @if($template->description)
                         <p class="text-sm text-gray-500 mb-3 line-clamp-2">{{ $template->description }}</p>
