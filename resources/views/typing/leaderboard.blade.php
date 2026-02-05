@@ -29,8 +29,7 @@
         </div>
         
         <h1 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 via-indigo-600 to-slate-800 mb-4 tracking-tight"
-            x-show="shown" x-transition:enter="transition ease-out duration-700 delay-100" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            Hall of Fame
+            ทำเนียบยอดฝีมือ
         </h1>
         <p class="text-slate-500 text-lg font-medium max-w-2xl mx-auto"
             x-show="shown" x-transition:enter="transition ease-out duration-700 delay-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
@@ -123,11 +122,11 @@
 
                                <div class="grid grid-cols-2 gap-2 mt-2">
                                     <div class="bg-indigo-50/50 rounded-lg p-2">
-                                        <div class="text-[10px] text-indigo-400 font-semibold uppercase">Score</div>
+                                        <div class="text-[10px] text-indigo-400 font-semibold uppercase">คะแนนรวม</div>
                                         <div class="text-indigo-700 font-bold">{{ $score }}</div>
                                     </div>
                                     <div class="bg-amber-50/50 rounded-lg p-2">
-                                         <div class="text-[10px] text-amber-500 font-semibold uppercase">Battle</div>
+                                         <div class="text-[10px] text-amber-500 font-semibold uppercase">คะแนนประลอง</div>
                                         <div class="text-amber-700 font-bold">{{ $points }}</div>
                                     </div>
                                </div>
@@ -189,11 +188,11 @@
 
                                <div class="grid grid-cols-2 gap-3">
                                     <div class="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl p-2.5 text-white shadow-lg shadow-indigo-500/20">
-                                        <div class="text-[10px] opacity-80 font-bold uppercase tracking-wider">Total Score</div>
+                                        <div class="text-[10px] opacity-80 font-bold uppercase tracking-wider">คะแนนรวม</div>
                                         <div class="text-xl font-black">{{ $score }}</div>
                                     </div>
                                     <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl p-2.5 text-white shadow-lg shadow-orange-500/20">
-                                         <div class="text-[10px] opacity-80 font-bold uppercase tracking-wider">Battle Points</div>
+                                         <div class="text-[10px] opacity-80 font-bold uppercase tracking-wider">คะแนนประลอง</div>
                                         <div class="text-xl font-black">{{ $points }}</div>
                                     </div>
                                </div>
@@ -250,11 +249,11 @@
 
                                <div class="grid grid-cols-2 gap-2 mt-2">
                                     <div class="bg-indigo-50/50 rounded-lg p-2">
-                                        <div class="text-[10px] text-indigo-400 font-semibold uppercase">Score</div>
+                                        <div class="text-[10px] text-indigo-400 font-semibold uppercase">คะแนนรวม</div>
                                         <div class="text-indigo-700 font-bold">{{ $score }}</div>
                                     </div>
                                     <div class="bg-amber-50/50 rounded-lg p-2">
-                                         <div class="text-[10px] text-amber-500 font-semibold uppercase">Battle</div>
+                                         <div class="text-[10px] text-amber-500 font-semibold uppercase">คะแนนประลอง</div>
                                         <div class="text-amber-700 font-bold">{{ $points }}</div>
                                     </div>
                                </div>
@@ -279,14 +278,14 @@
                 <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
                     <i class="fas fa-list-ol"></i>
                 </div>
-                <span>Ranking List</span>
+                <span>ตารางอันดับ</span>
             </h2>
              <div class="flex items-center gap-4 text-sm font-medium text-slate-500">
                 <div class="hidden md:flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Score
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> คะแนนรวม
                 </div>
                 <div class="hidden md:flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> Battle
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> คะแนนประลอง
                 </div>
             </div>
         </div>
@@ -295,13 +294,13 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider font-bold">
-                        <th class="py-5 pl-8 pr-4 w-24">Rank</th>
-                        <th class="py-5 px-4">Student</th>
-                        <th class="py-5 px-4 hidden md:table-cell">Class</th>
-                        <th class="py-5 px-4 hidden md:table-cell w-1/4">Progress</th>
-                        <th class="py-5 px-4 text-right">Total Score</th>
-                        <th class="py-5 px-4 text-right">Battle Pts</th>
-                        <th class="py-5 pl-4 pr-8 hidden sm:table-cell text-center w-24">Status</th>
+                        <th class="py-5 pl-8 pr-4 w-24">อันดับ</th>
+                        <th class="py-5 px-4">นักเรียน</th>
+                        <th class="py-5 px-4 hidden md:table-cell">ห้องเรียน</th>
+                        <th class="py-5 px-4 hidden md:table-cell w-1/4">ความคืบหน้า</th>
+                        <th class="py-5 px-4 text-right">คะแนนรวม</th>
+                        <th class="py-5 px-4 text-right">คะแนนประลอง</th>
+                        <th class="py-5 pl-4 pr-8 hidden sm:table-cell text-center w-24">สถานะ</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -368,7 +367,7 @@
                             <td class="py-4 px-4 hidden md:table-cell">
                                 <div class="w-full max-w-[140px]">
                                     <div class="flex justify-between text-[10px] text-slate-400 mb-1">
-                                        <span>Tasks</span>
+                                        <span>งานที่ส่ง</span>
                                         <span>{{ $submittedCount }}/{{ $totalAssignments }}</span>
                                     </div>
                                     <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
