@@ -1,396 +1,412 @@
 <x-typing-app :role="'admin'" :title="'ตรวจงานที่ส่ง - ระบบวิชาพิมพ์หนังสือราชการ 1'">
-    <div x-data="gradingApp">
+    <div x-data="gradingApp" class="space-y-8 pb-10">
 
-        <!-- Page Header -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
-                    <i class="fas fa-file-upload text-primary-500 mr-2"></i>
-                    ตรวจงานที่ส่ง
-                </h1>
-                <p class="text-gray-500 mt-1">ตรวจสอบและให้คะแนนงานที่นักเรียนส่ง</p>
+        <!-- Aurora & Glass Header -->
+        <div class="relative overflow-hidden bg-white border border-white/40 rounded-[2.5rem] p-8 shadow-2xl group transition-all duration-500 hover:shadow-primary-500/10">
+            <!-- Aurora Background -->
+            <div class="absolute inset-0 bg-gradient-to-br from-white via-blue-50/50 to-indigo-50/30 opacity-80"></div>
+            <div class="absolute top-[-30%] right-[-10%] w-[600px] h-[600px] bg-gradient-to-br from-blue-300/20 via-primary-300/20 to-indigo-200/20 rounded-full blur-[80px] animate-pulse-slow pointer-events-none mix-blend-multiply"></div>
+            <div class="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-tr from-indigo-200/20 via-blue-200/20 to-purple-200/20 rounded-full blur-[80px] animate-pulse-slow delay-1000 pointer-events-none mix-blend-multiply"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex items-center gap-5">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-primary-500/30 transform group-hover:rotate-6 transition-transform">
+                        <i class="fas fa-file-upload text-3xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl md:text-4xl font-black text-gray-800 tracking-tight">ตรวจงานที่ส่ง</h1>
+                        <p class="text-gray-500 mt-1 font-medium flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></span>
+                            ตรวจสอบและให้คะแนนงานที่นักเรียนส่งเข้ามา
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Admin Action Buttons (Glass style) -->
+                <div class="flex flex-wrap items-center gap-3">
+                    @if(request('assignment_id'))
+                        <button @click="autoGradeAllSubmissions({{ request('assignment_id') }})"
+                            class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/60 backdrop-blur-md border border-white text-gray-700 font-bold hover:bg-white hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                            :disabled="isAutoGrading">
+                            <i class="fas fa-robot text-primary-500" :class="{ 'fa-spin': isAutoGrading }"></i>
+                            <span x-text="isAutoGrading ? 'กำลังตรวจอาศัย AI...' : 'ตรวจอัตโนมัติทั้งหมด'"></span>
+                        </button>
+                        <a href="{{ route('typing.admin.submissions.export.zip', ['assignment_id' => request('assignment_id')]) }}"
+                            class="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-900 text-white font-bold hover:bg-black hover:shadow-xl hover:-translate-y-0.5 transition-all shadow-lg shadow-gray-200">
+                            <i class="fas fa-file-archive text-amber-400"></i>
+                            ดาวน์โหลดไฟล์ (ZIP)
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
 
-        <!-- Filters -->
-        <form action="{{ route('typing.admin.submissions') }}" method="GET" class="card mb-6">
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1 relative">
+        <!-- Bento Grid Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="group relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-primary-100 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary-50 to-transparent rounded-bl-full -mr-8 -mt-8 opacity-60"></div>
+                <div class="relative flex flex-col gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center text-xl shadow-inner group-hover:bg-primary-500 group-hover:text-white transition-colors">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-black text-gray-800 tracking-tight">{{ $totalSubmissions }}</p>
+                        <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">งานทั้งหมด</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-amber-100 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-50 to-transparent rounded-bl-full -mr-8 -mt-8 opacity-60"></div>
+                <div class="relative flex flex-col gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-black text-amber-600 tracking-tight">{{ $pendingSubmissions }}</p>
+                        <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">รอตรวจ</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-secondary-100 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-secondary-50 to-transparent rounded-bl-full -mr-8 -mt-8 opacity-60"></div>
+                <div class="relative flex flex-col gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-secondary-50 text-secondary-600 flex items-center justify-center text-xl shadow-inner group-hover:bg-secondary-500 group-hover:text-white transition-colors">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-black text-gray-800 tracking-tight">{{ $gradedSubmissions }}</p>
+                        <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">ให้คะแนนแล้ว</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:border-accent-100 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-accent-50 to-transparent rounded-bl-full -mr-8 -mt-8 opacity-60"></div>
+                <div class="relative flex flex-col gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-accent-50 text-accent-600 flex items-center justify-center text-xl shadow-inner group-hover:bg-accent-500 group-hover:text-white transition-colors">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-black text-gray-800 tracking-tight">{{ number_format($averageScore, 1) }}</p>
+                        <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">คะแนนเฉลี่ย</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters (Modern Card) -->
+        <form action="{{ route('typing.admin.submissions') }}" method="GET" class="bg-white rounded-[2rem] p-4 shadow-sm border border-gray-100">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-5 relative group">
                     <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="ค้นหาชื่อนักเรียน/รหัสนักเรียน..." class="input pl-10">
-                    <button type="submit"
-                        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-600">
+                        placeholder="ค้นหาชื่อนักเรียน หรือ รหัสนักเรียน..." 
+                        class="w-full pl-12 pr-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-500 transition-colors">
                         <i class="fas fa-search"></i>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <select name="sort" class="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer" onchange="this.form.submit()">
+                        <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>ล่าสุด</option>
+                        <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>เก่าสุด</option>
+                        <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>ก - ฮ</option>
+                        <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>ฮ - ก</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <select name="assignment_id" class="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer" onchange="this.form.submit()">
+                        <option value="">ทุกงาน</option>
+                        @foreach($allAssignments as $assignment)
+                            <option value="{{ $assignment->id }}" {{ request('assignment_id') == $assignment->id ? 'selected' : '' }}>{{ Str::limit($assignment->title, 20) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <select name="status" class="w-full px-4 py-3 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer" onchange="this.form.submit()">
+                        <option value="">ทุกสถานะ</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>รอตรวจ</option>
+                        <option value="graded" {{ request('status') == 'graded' ? 'selected' : '' }}>ตรวจแล้ว</option>
+                    </select>
+                </div>
+                <div class="md:col-span-1">
+                    <button type="submit" class="w-full h-full rounded-2xl bg-primary-500 text-white hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/20">
+                        <i class="fas fa-filter"></i>
                     </button>
                 </div>
-                <select name="sort" class="input w-full md:w-48" onchange="this.form.submit()">
-                    <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>เวลาส่ง (ล่าสุด)</option>
-                    <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>เวลาส่ง (เก่าสุด)</option>
-                    <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>ชื่อ (ก - ฮ)</option>
-                    <option value="name_desc" {{ request('sort') == 'name_desc' ? 'selected' : '' }}>ชื่อ (ฮ - ก)</option>
-                </select>
-                <select name="assignment_id" class="input w-full md:w-48" onchange="this.form.submit()">
-                    <option value="">ทุกงาน</option>
-                    @foreach($allAssignments as $assignment)
-                        <option value="{{ $assignment->id }}" {{ request('assignment_id') == $assignment->id ? 'selected' : '' }}>{{ $assignment->title }}</option>
-                    @endforeach
-                </select>
-                <select name="status" class="input w-full md:w-48" onchange="this.form.submit()">
-                    <option value="">ทุกสถานะ</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>รอตรวจ</option>
-                    <option value="graded" {{ request('status') == 'graded' ? 'selected' : '' }}>ให้คะแนนแล้ว</option>
-                </select>
             </div>
         </form>
 
-        <!-- Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="card p-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-                    <i class="fas fa-inbox text-primary-600"></i>
+        <!-- Submissions Table Card -->
+        <div class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 overflow-hidden relative">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center">
+                        <i class="fas fa-list-ul"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-gray-800">รายการงานที่ส่ง</h2>
                 </div>
-                <div>
-                    <p class="text-2xl font-bold text-gray-800">{{ $totalSubmissions }}</p>
-                    <p class="text-xs text-gray-500">งานทั้งหมด</p>
-                </div>
-            </div>
-            <div class="card p-4 flex items-center gap-3 bg-amber-50 border-amber-200">
-                <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <i class="fas fa-clock text-amber-600"></i>
-                </div>
-                <div>
-                    <p class="text-2xl font-bold text-amber-600">{{ $pendingSubmissions }}</p>
-                    <p class="text-xs text-gray-500">รอตรวจ</p>
-                </div>
-            </div>
-            <div class="card p-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-secondary-100 flex items-center justify-center">
-                    <i class="fas fa-check-circle text-secondary-600"></i>
-                </div>
-                <div>
-                    <p class="text-2xl font-bold text-gray-800">{{ $gradedSubmissions }}</p>
-                    <p class="text-xs text-gray-500">ให้คะแนนแล้ว</p>
-                </div>
-            </div>
-            <div class="card p-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-accent-100 flex items-center justify-center">
-                    <i class="fas fa-chart-line text-accent-600"></i>
-                </div>
-                <div>
-                    <p class="text-2xl font-bold text-gray-800">{{ number_format($averageScore, 1) }}</p>
-                    <p class="text-xs text-gray-500">คะแนนเฉลี่ย</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Submissions Table -->
-        <div class="card">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-lg font-semibold text-gray-800">
-                    <i class="fas fa-list text-primary-500 mr-2"></i>
-                    รายการงานที่ส่ง
-                </h2>
-                <div class="flex items-center gap-2">
-                    @if(request('assignment_id'))
-                        <button @click="autoGradeAllSubmissions({{ request('assignment_id') }})"
-                            class="btn-secondary text-sm" :disabled="isAutoGrading">
-                            <i class="fas fa-robot mr-1" :class="{ 'fa-spin': isAutoGrading }"></i>
-                            <span x-text="isAutoGrading ? 'กำลังตรวจ...' : 'ตรวจอัตโนมัติทั้งหมด'"></span>
-                        </button>
-                        <a href="{{ route('typing.admin.submissions.export.zip', ['assignment_id' => request('assignment_id')]) }}"
-                            class="btn-primary text-sm">
-                            <i class="fas fa-file-archive mr-1"></i>
-                            ดาวน์โหลดไฟล์ทั้งหมด (ZIP)
-                        </a>
-                    @endif
-                    <button class="btn-outline text-sm">
-                        <i class="fas fa-download mr-1"></i>
-                        ส่งออก CSV
-                    </button>
-                </div>
+                <button class="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-primary-500 transition-colors">
+                    <i class="fas fa-download"></i>
+                    ส่งออก CSV
+                </button>
             </div>
 
-            <div class="overflow-x-auto w-full">
-                <table class="table">
+            <div class="overflow-x-auto -mx-8">
+                <table class="w-full text-left border-separate border-spacing-y-4 px-8">
                     <thead>
-                        <tr>
-                            <th>นักเรียน</th>
-                            <th>งาน</th>
-                            <th>ไฟล์ที่ส่ง</th>
-                            <th>เวลาส่ง</th>
-                            <th>สถานะ</th>
-                            <th>คะแนน</th>
-                            <th>การดำเนินการ</th>
+                        <tr class="text-gray-400 text-xs font-black uppercase tracking-widest">
+                            <th class="pb-2 px-6">นักเรียน</th>
+                            <th class="pb-2">งาน / ประเภท</th>
+                            <th class="pb-2 text-center">หลักฐานที่ส่ง</th>
+                            <th class="pb-2">เวลาส่ง</th>
+                            <th class="pb-2">สถานะ</th>
+                            <th class="pb-2">คะแนน</th>
+                            <th class="pb-2 text-right">การจัดการ</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($submissions as $submission)
-                            <tr class="{{ $submission->score === null ? 'bg-amber-50/50' : '' }}">
-                                <td>
-                                    <div class="flex items-center gap-3">
-                                        <img src="{{ $submission->user->avatar_url }}" alt=""
-                                            class="avatar-sm object-cover">
+                            <tr class="group transition-all duration-300">
+                                <td class="bg-gray-50/50 group-hover:bg-primary-50 px-6 py-4 rounded-l-[1.5rem] border-y border-l border-transparent group-hover:border-primary-100">
+                                    <div class="flex items-center gap-4">
+                                        <div class="relative">
+                                            <img src="{{ $submission->user->avatar_url }}" alt=""
+                                                class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md">
+                                            <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
+                                        </div>
                                         <div>
-                                            <p class="font-medium text-gray-800">{{ $submission->user->name ?? 'Unknown' }}
-                                            </p>
-                                            <p class="text-xs text-gray-500">{{ $submission->user->student_id ?? '-' }}</p>
+                                            <p class="font-bold text-gray-800">{{ $submission->user->name ?? 'Unknown' }}</p>
+                                            <p class="text-xs font-bold text-gray-400 font-mono">{{ $submission->user->student_id ?? '-' }}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td>{{ $submission->assignment->title ?? '-' }}</td>
-                                <td>
+                                <td class="bg-gray-50/50 group-hover:bg-primary-50 py-4 border-y border-transparent group-hover:border-primary-100">
+                                    <p class="font-bold text-gray-700 leading-tight">{{ Str::limit($submission->assignment->title ?? '-', 30) }}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded-md {{ $submission->file_path ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600' }}">
+                                            {{ $submission->file_path ? 'File Upload' : 'Typing Test' }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="bg-gray-50/50 group-hover:bg-primary-50 py-4 border-y border-transparent group-hover:border-primary-100 text-center">
                                     @if($submission->file_path)
-                                        {{-- File Upload Submission --}}
-                                        <a href="{{ asset($submission->file_path) }}" target="_blank"
-                                            class="flex items-center gap-2 text-primary-600 hover:text-primary-700">
-                                            @if(Str::endsWith($submission->file_name, '.pdf'))
-                                                <i class="fas fa-file-pdf text-red-500"></i>
-                                            @else
-                                                <i class="fas fa-file-word text-blue-500"></i>
-                                            @endif
-                                            <span class="text-sm">{{ Str::limit($submission->file_name, 20) }}</span>
-                                            <i class="fas fa-download text-xs"></i>
-                                        </a>
-                                        <button @click="openIntegrityModal({{ json_encode($submission) }})"
-                                            class="text-gray-400 hover:text-blue-500 transition-colors"
-                                            title="ดูข้อมูลไฟล์ (Check Integrity)">
-                                            <i class="fas fa-info-circle"></i>
-                                        </button>
+                                        <div class="flex items-center justify-center gap-2">
+                                            <a href="{{ asset($submission->file_path) }}" target="_blank"
+                                                class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary-600 hover:text-white hover:bg-primary-500 transition-all border border-gray-100">
+                                                @if(Str::endsWith($submission->file_name, '.pdf'))
+                                                    <i class="fas fa-file-pdf text-red-500 group-hover:text-white"></i>
+                                                @else
+                                                    <i class="fas fa-file-word text-blue-500 group-hover:text-white"></i>
+                                                @endif
+                                            </a>
+                                            <button @click="openIntegrityModal({{ json_encode($submission) }})"
+                                                class="w-8 h-8 rounded-lg text-gray-300 hover:text-blue-500 transition-colors"
+                                                title="Check Integrity">
+                                                <i class="fas fa-fingerprint"></i>
+                                            </button>
+                                        </div>
                                     @else
-                                        {{-- Typing Submission --}}
-                                        <div class="text-sm">
-                                            <span class="font-medium text-gray-700">WPM: {{ $submission->wpm }}</span>
-                                            <span class="text-gray-400 mx-1">|</span>
-                                            <span class="text-gray-500">{{ $submission->accuracy }}%</span>
+                                        <div class="inline-flex flex-col items-center">
+                                            <span class="text-sm font-black text-gray-700">{{ $submission->wpm }} <small class="text-[10px] text-gray-400 uppercase">WPM</small></span>
+                                            <span class="text-[10px] font-bold text-emerald-500">{{ $submission->accuracy }}% ACC</span>
                                         </div>
                                     @endif
                                 </td>
-                                <td>
-                                    <p class="text-gray-800">{{ $submission->created_at->format('d/m/Y') }}</p>
-                                    <p class="text-xs text-gray-500">{{ $submission->created_at->format('H:i น.') }}</p>
+                                <td class="bg-gray-50/50 group-hover:bg-primary-50 py-4 border-y border-transparent group-hover:border-primary-100">
+                                    <p class="text-xs font-bold text-gray-700">{{ $submission->created_at->format('d/m/Y') }}</p>
+                                    <p class="text-[10px] font-bold text-gray-400">{{ $submission->created_at->format('H:i น.') }}</p>
                                 </td>
-                                <td>
+                                <td class="bg-gray-50/50 group-hover:bg-primary-50 py-4 border-y border-transparent group-hover:border-primary-100">
                                     @if($submission->score === null)
-                                        <span class="badge-warning">รอตรวจ</span>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-600 text-[10px] font-black uppercase tracking-wider">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                            รอตรวจ
+                                        </span>
                                     @else
-                                        <span class="badge-secondary">ให้คะแนนแล้ว</span>
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-100 text-secondary-600 text-[10px] font-black uppercase tracking-wider">
+                                            <i class="fas fa-check-double"></i>
+                                            เรียบร้อย
+                                        </span>
                                     @endif
                                 </td>
-                                <td>
-                                    @if($submission->score === null)
-                                        <span class="text-gray-400">-</span>
-                                    @else
-                                        <div class="flex flex-col">
-                                            <div class="flex items-center gap-1">
-                                                <span class="text-lg font-bold text-primary-600">{{ $submission->score }}</span>
-                                                <span
-                                                    class="text-gray-500">/{{ $submission->assignment->max_score ?? 100 }}</span>
+                                <td class="bg-gray-50/50 group-hover:bg-primary-50 py-4 border-y border-transparent group-hover:border-primary-100">
+                                    <div class="flex flex-col">
+                                        @if($submission->score === null)
+                                            <span class="text-gray-300 font-black italic">--</span>
+                                        @else
+                                            <div class="flex items-baseline gap-0.5">
+                                                <span class="text-xl font-black text-primary-600">{{ $submission->score }}</span>
+                                                <span class="text-[10px] font-bold text-gray-400">/{{ $submission->assignment->max_score ?? 100 }}</span>
                                             </div>
                                             @if($submission->feedback && str_contains($submission->feedback, 'โหมดเข้มงวด'))
-                                                <span class="text-xs text-amber-600 flex items-center gap-1">
-                                                    <i class="fas fa-lock text-xs"></i>
-                                                    เข้มงวด
+                                                <span class="text-[9px] font-black text-amber-500 uppercase flex items-center gap-1 mt-0.5">
+                                                    <i class="fas fa-shield-halved"></i> Strict
                                                 </span>
                                             @endif
-                                        </div>
-                                    @endif
+                                        @endif
+                                    </div>
                                 </td>
-                                <td>
-                                    <div class="flex items-center gap-2"
-                                        x-data="{ loading: false, scored: {{ $submission->score !== null ? 'true' : 'false' }} }">
-                                        {{-- Quick Score Buttons --}}
-                                        <div class="flex items-center gap-1">
-                                            @foreach([10, 8, 6, 4] as $quickScore)
+                                <td class="bg-gray-50/50 group-hover:bg-primary-50 px-6 py-4 rounded-r-[1.5rem] border-y border-r border-transparent group-hover:border-primary-100 text-right">
+                                    <div class="flex items-center justify-end gap-2"
+                                        x-data="{ loading: false }">
+                                        
+                                        <!-- Quick Grade Buttons Group -->
+                                        <div class="flex items-center bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+                                            @foreach([10, 8, 6] as $qScore)
                                                 <button
-                                                    @click="quickGrade({{ $submission->id }}, {{ $quickScore }}, $el, {{ $submission->assignment->max_score ?? 100 }})"
-                                                    class="w-8 h-8 rounded-full text-xs font-bold transition-all duration-200 
-                                                            {{ $submission->score == $quickScore ? 'bg-primary-600 text-white ring-2 ring-primary-300' : 'bg-gray-100 hover:bg-primary-100 text-gray-700 hover:text-primary-600' }}"
-                                                    :class="{ 'opacity-50 cursor-not-allowed': loading }" :disabled="loading"
-                                                    title="ให้ {{ $quickScore }} คะแนน">
-                                                    {{ $quickScore }}
+                                                    @click="quickGrade({{ $submission->id }}, {{ $qScore }}, $el, {{ $submission->assignment->max_score ?? 100 }})"
+                                                    class="w-8 h-8 rounded-lg text-xs font-black transition-all 
+                                                            {{ $submission->score == $qScore ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'text-gray-400 hover:text-primary-600 hover:bg-primary-50' }}"
+                                                    :disabled="loading">
+                                                    {{ $qScore }}
                                                 </button>
                                             @endforeach
                                         </div>
 
-                                        {{-- Advanced Grading Button --}}
-                                        <button data-feedback="{{ $submission->feedback ?? '' }}"
-                                            @click="openGradingModal({{ $submission->id }}, {{ $submission->score ?? 'null' }}, $el.dataset.feedback, {{ $submission->assignment->max_score ?? 100 }})"
-                                            class="btn-outline py-1.5 px-2 text-sm" title="ให้คะแนนแบบละเอียด + ข้อเสนอแนะ">
-                                            <i class="fas fa-edit"></i>
+                                        <!-- Actions -->
+                                        <button @click="openGradingModal({{ $submission->id }}, {{ $submission->score ?? 'null' }}, '{{ addslashes($submission->feedback) }}', {{ $submission->assignment->max_score ?? 100 }})"
+                                            class="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-primary-500 hover:border-primary-200 transition-all flex items-center justify-center">
+                                            <i class="fas fa-pen-nib"></i>
                                         </button>
 
-                                        {{-- Delete Button --}}
                                         <button @click="deleteSubmission({{ $submission->id }})"
-                                            class="btn-outline text-red-500 hover:bg-red-50 hover:text-red-600 border-red-200 py-1.5 px-2 text-sm"
-                                            title="ลบงานที่ส่ง">
-                                            <i class="fas fa-trash"></i>
+                                            class="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm text-gray-300 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center">
+                                            <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-8 text-gray-500">ไม่มีข้อมูลการส่งงาน</td>
+                                <td colspan="7" class="py-20 text-center">
+                                    <div class="flex flex-col items-center gap-4">
+                                        <div class="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-200 text-4xl">
+                                            <i class="fas fa-ghost"></i>
+                                        </div>
+                                        <p class="text-gray-400 font-bold">ไม่พบข้อมูลการส่งงานในขณะนี้</p>
+                                    </div>
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-100">
-                <p class="text-sm text-gray-500">แสดง
-                    {{ $submissions->firstItem() ?? 0 }}-{{ $submissions->lastItem() ?? 0 }} จาก
-                    {{ $submissions->total() }} รายการ
+            <!-- Pagination (Modern) -->
+            <div class="mt-10 pt-8 border-t border-gray-50 flex flex-col md:flex-row items-center justify-between gap-6">
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">
+                    Showing <span class="text-gray-800">{{ $submissions->firstItem() ?? 0 }}-{{ $submissions->lastItem() ?? 0 }}</span> 
+                    of <span class="text-gray-800">{{ $submissions->total() }}</span> entries
                 </p>
-                {{ $submissions->links() }}
+                <div class="premium-pagination">
+                    {{ $submissions->links() }}
+                </div>
             </div>
         </div>
 
-        <!-- Grading Modal -->
-        <div x-show="isGradingModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto"
-            aria-labelledby="grading-modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="isGradingModalOpen" x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                    x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeGradingModal"
-                    aria-hidden="true"></div>
+        <!-- Premium Grading Modal -->
+        <div x-show="isGradingModalOpen" style="display: none;" class="fixed inset-0 z-[100] overflow-y-auto"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="closeGradingModal"></div>
 
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden"
+                    x-transition:enter="transition ease-out duration-300 transform"
+                    x-transition:enter-start="scale-95 translate-y-8"
+                    x-transition:enter-end="scale-100 translate-y-0">
+                    
+                    <div class="bg-gradient-to-r from-primary-600 to-indigo-700 px-8 py-6 text-white">
+                        <h3 class="text-2xl font-black">ให้คะแนนและคำแนะนำ</h3>
+                        <p class="text-primary-100 text-sm opacity-80 mt-1">แจ้งคะแนนให้นักเรียนทราบทันที</p>
+                    </div>
 
-                <div x-show="isGradingModalOpen" x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div
-                                class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 sm:mx-0 sm:h-10 sm:w-10">
-                                <i class="fas fa-edit text-primary-600"></i>
-                            </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="grading-modal-title">
-                                    ให้คะแนนและข้อเสนอแนะ
-                                </h3>
-                                <div class="mt-4 space-y-4">
-                                    <div>
-                                        <label for="score" class="block text-sm font-medium text-gray-700">คะแนน (เต็ม
-                                            <span x-text="maxScore"></span>)</label>
-                                        <input type="number" id="score" x-model="currentScore" class="input mt-1 w-full"
-                                            min="0" :max="maxScore">
-                                    </div>
-                                    <div>
-                                        <label for="feedback"
-                                            class="block text-sm font-medium text-gray-700">ข้อเสนอแนะ/ผลตรวจ
-                                            (Feedback)</label>
-                                        <textarea id="feedback" x-model="currentFeedback" rows="12"
-                                            class="input mt-1 w-full font-mono text-xs whitespace-pre-line leading-relaxed"
-                                            placeholder="พิมพ์ข้อเสนอแนะให้นักเรียน..."></textarea>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            <i class="fas fa-info-circle mr-1"></i>
-                                            ข้อมูลนี้จะแสดงให้นักเรียนเห็นในหน้าคะแนน
-                                        </p>
-                                    </div>
-                                </div>
+                    <div class="p-8 space-y-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-400 uppercase tracking-widest">คะแนนที่ได้ (เต็ม <span x-text="maxScore"></span>)</label>
+                            <div class="relative">
+                                <input type="number" x-model="currentScore" class="w-full pl-6 pr-12 py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 text-2xl font-black transition-all" :max="maxScore">
+                                <span class="absolute right-6 top-1/2 -translate-y-1/2 text-gray-300 font-bold">PTS</span>
                             </div>
                         </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-sm font-black text-gray-400 uppercase tracking-widest">ข้อเสนอแนะเพิ่มเติม</label>
+                            <textarea x-model="currentFeedback" rows="8"
+                                class="w-full px-6 py-4 rounded-2xl bg-gray-50 border-transparent focus:bg-white focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 text-sm font-medium leading-relaxed transition-all resize-none"
+                                placeholder="เขียนคำแนะนำดีๆ ให้นักเรียนกันเถอะ..."></textarea>
+                        </div>
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                        <button type="button" @click="submitGrading" :disabled="isSubmitting"
-                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
-                            <i class="fas fa-spinner fa-spin mr-2" x-show="isSubmitting"></i>
-                            บันทึกคะแนน
-                        </button>
+
+                    <div class="px-8 py-6 bg-gray-50 flex items-center gap-4">
                         <button type="button" @click="closeGradingModal"
-                            class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:w-auto sm:text-sm">
+                            class="flex-1 py-4 rounded-2xl text-sm font-black text-gray-500 hover:bg-gray-100 transition-all uppercase tracking-widest">
                             ยกเลิก
+                        </button>
+                        <button type="button" @click="submitGrading" :disabled="isSubmitting"
+                            class="flex-[2] py-4 rounded-2xl bg-primary-600 text-white shadow-xl shadow-primary-500/30 font-black text-sm hover:bg-primary-700 hover:-translate-y-1 active:translate-y-0 transition-all uppercase tracking-widest disabled:opacity-50">
+                            <span x-show="!isSubmitting">บันทึกคะแนน</span>
+                            <i class="fas fa-spinner fa-spin" x-show="isSubmitting"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- File Integrity Modal -->
-        <div x-show="isIntegrityModalOpen" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto"
-            aria-labelledby="integrity-modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div x-show="isIntegrityModalOpen" x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                    x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeIntegrityModal"
-                    aria-hidden="true"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div x-show="isIntegrityModalOpen" x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div
-                                class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                                <i class="fas fa-shield-alt text-blue-600"></i>
+        <!-- File Integrity Modal (Premium Design) -->
+        <div x-show="isIntegrityModalOpen" style="display: none;" class="fixed inset-0 z-[100] overflow-y-auto">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm" @click="closeIntegrityModal"></div>
+                
+                <div class="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden">
+                    <div class="p-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl">
+                                <i class="fas fa-shield-halved"></i>
                             </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="integrity-modal-title">
-                                    ข้อมูลไฟล์และการตรวจสอบ (File Integrity)
-                                </h3>
-                                <div class="mt-2">
-                                    <p class="text-sm text-gray-500 mb-4">
-                                        ข้อมูล metadata และ Hash ของไฟล์เพื่อใช้ตรวจสอบความถูกต้องและป้องกันการคัดลอก
-                                        (Plagiarism)
-                                    </p>
+                            <div>
+                                <h3 class="text-2xl font-black text-gray-800">ตรวจสอบความถูกต้อง</h3>
+                                <p class="text-sm font-bold text-gray-400">Metadata & Anti-Plagiarism Check</p>
+                            </div>
+                        </div>
 
-                                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-3 text-sm">
-                                        <div class="grid grid-cols-3 gap-2">
-                                            <span class="font-semibold text-gray-600">ชื่อไฟล์เดิม:</span>
-                                            <span class="col-span-2 text-gray-800 break-all"
-                                                x-text="currentIntegrity?.file_metadata?.original_name || '-'"></span>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2">
-                                            <span class="font-semibold text-gray-600">ขนาดไฟล์:</span>
-                                            <span class="col-span-2 text-gray-800"
-                                                x-text="currentIntegrity?.file_metadata?.size ? (currentIntegrity.file_metadata.size / 1024).toFixed(2) + ' KB' : '-'"></span>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2">
-                                            <span class="font-semibold text-gray-600">ประเภทไฟล์:</span>
-                                            <span class="col-span-2 text-gray-800"
-                                                x-text="currentIntegrity?.file_metadata?.mime_type || '-'"></span>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2">
-                                            <span class="font-semibold text-gray-600">เวลาอัปโหลด:</span>
-                                            <span class="col-span-2 text-gray-800"
-                                                x-text="currentIntegrity?.file_metadata?.uploaded_at || '-'"></span>
-                                        </div>
-                                        <div class="border-t border-gray-200 my-2"></div>
-                                        <div class="space-y-1">
-                                            <span class="font-semibold text-gray-600 block">File Hash (MD5):</span>
-                                            <code
-                                                class="block w-full bg-gray-100 p-2 rounded border border-gray-200 text-xs font-mono break-all text-gray-600"
-                                                x-text="currentIntegrity?.file_hash || 'No Hash Data'"></code>
-                                            <p class="text-xs text-blue-500 mt-1">
-                                                <i class="fas fa-info-circle"></i> หากค่า Hash ตรงกับไฟล์อื่น
-                                                แสดงว่าเป็นไฟล์เดียวกัน 100%
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="grid grid-cols-2 gap-6 mb-8">
+                            <div class="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ชื่อไฟล์เดิม</p>
+                                <p class="text-sm font-black text-gray-700 break-all" x-text="currentIntegrity?.file_metadata?.original_name || '-'"></p>
+                            </div>
+                            <div class="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ขนาดไฟล์</p>
+                                <p class="text-sm font-black text-gray-700" x-text="currentIntegrity?.file_metadata?.size ? (currentIntegrity.file_metadata.size / 1024).toFixed(2) + ' KB' : '-'"></p>
+                            </div>
+                            <div class="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">ประเภทไฟล์</p>
+                                <p class="text-sm font-black text-gray-700 uppercase" x-text="currentIntegrity?.file_metadata?.mime_type?.split('/')[1] || '-'"></p>
+                            </div>
+                            <div class="bg-gray-50 p-5 rounded-3xl border border-gray-100">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">อัปโหลดเมื่อ</p>
+                                <p class="text-sm font-black text-gray-700" x-text="currentIntegrity?.file_metadata?.uploaded_at || '-'"></p>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-600 rounded-3xl p-6 text-white shadow-xl shadow-blue-500/20">
+                            <p class="text-[10px] font-black opacity-60 uppercase tracking-widest mb-2">Digital Signature (MD5 Hash)</p>
+                            <code class="block font-mono text-xs break-all bg-white/20 p-3 rounded-xl border border-white/20 mb-3" x-text="currentIntegrity?.file_hash || 'No Hash Data'"></code>
+                            <div class="flex items-center gap-2 text-[10px] font-bold opacity-80">
+                                <i class="fas fa-info-circle"></i>
+                                หากค่า Hash ตรงกับงานอื่น แสดงว่าเป็นไฟล์เดียวกัน 100%
                             </div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="button" @click="closeIntegrityModal"
-                            class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm">
+
+                    <div class="p-4 bg-gray-50 text-center">
+                        <button @click="closeIntegrityModal" class="px-8 py-3 rounded-2xl text-xs font-black text-gray-500 hover:text-gray-700 transition-colors uppercase tracking-widest">
                             ปิดหน้าต่าง
                         </button>
                     </div>
@@ -398,7 +414,7 @@
             </div>
         </div>
 
-        <!-- Inject Alpine Data -->
+        <!-- Inject Alpine Data (Same Logic, New Toast) -->
         <script>
             document.addEventListener('alpine:init', () => {
                 Alpine.data('gradingApp', () => ({
@@ -408,30 +424,19 @@
                     currentFeedback: '',
                     maxScore: 100,
                     isSubmitting: false,
-
-                    // Integrity Modal Logic
                     isIntegrityModalOpen: false,
                     currentIntegrity: null,
-
-                    // Auto-Grading
                     isAutoGrading: false,
 
                     async autoGradeAllSubmissions(assignmentId) {
                         if (this.isAutoGrading) return;
                         this.isAutoGrading = true;
-
                         try {
                             const response = await fetch(`{{ url('typing/admin/submissions/auto-grade-all') }}/${assignmentId}`, {
                                 method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                }
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
                             });
-
                             const data = await response.json();
-
                             if (response.ok && data.success) {
                                 this.showToast(data.message, 'success');
                                 setTimeout(() => window.location.reload(), 1500);
@@ -439,215 +444,96 @@
                                 this.showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
                             }
                         } catch (error) {
-                            console.error('Auto-grade error:', error);
-                            this.showToast('เกิดข้อผิดพลาดในการตรวจอัตโนมัติ', 'error');
-                        } finally {
-                            this.isAutoGrading = false;
-                        }
-                    },
-
-                    async autoGradeSubmission(submissionId, btnEl) {
-                        btnEl.disabled = true;
-                        btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-                        try {
-                            const response = await fetch(`{{ url('typing/admin/submissions') }}/${submissionId}/auto-grade`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                }
-                            });
-
-                            const data = await response.json();
-
-                            if (response.ok && data.success) {
-                                this.showToast(`ให้คะแนน ${data.score} (${data.accuracy}%)`, 'success');
-                                setTimeout(() => window.location.reload(), 1000);
-                            } else {
-                                this.showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-                                btnEl.disabled = false;
-                                btnEl.innerHTML = '<i class="fas fa-robot"></i>';
-                            }
-                        } catch (error) {
-                            console.error('Auto-grade error:', error);
-                            this.showToast('เกิดข้อผิดพลาด', 'error');
-                            btnEl.disabled = false;
-                            btnEl.innerHTML = '<i class="fas fa-robot"></i>';
-                        }
+                            this.showToast('เกิดข้อผิดพลาดระบบ AI', 'error');
+                        } finally { this.isAutoGrading = false; }
                     },
 
                     openGradingModal(id, score, feedback, max) {
                         this.currentSubmissionId = id;
-                        this.currentScore = score;
+                        this.currentScore = score === 'null' ? 0 : score;
                         this.currentFeedback = feedback;
                         this.maxScore = max;
                         this.isGradingModalOpen = true;
-                        this.isSubmitting = false;
                     },
 
-                    closeGradingModal() {
-                        this.isGradingModalOpen = false;
-                        this.currentSubmissionId = null;
-                    },
-
-                    openIntegrityModal(submission) {
-                        this.currentIntegrity = submission;
-                        this.isIntegrityModalOpen = true;
-                    },
-
-                    closeIntegrityModal() {
-                        this.isIntegrityModalOpen = false;
-                        this.currentIntegrity = null;
-                    },
+                    closeGradingModal() { this.isGradingModalOpen = false; },
+                    openIntegrityModal(submission) { this.currentIntegrity = submission; this.isIntegrityModalOpen = true; },
+                    closeIntegrityModal() { this.isIntegrityModalOpen = false; },
 
                     async submitGrading() {
                         if (this.isSubmitting) return;
                         this.isSubmitting = true;
-
                         try {
                             const response = await fetch(`{{ url('typing/admin/submissions') }}/${this.currentSubmissionId}/score`, {
                                 method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    score: this.currentScore,
-                                    feedback: this.currentFeedback
-                                })
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                body: JSON.stringify({ score: this.currentScore, feedback: this.currentFeedback })
                             });
-
                             if (response.ok) {
-                                this.showToast('บันทึกคะแนนเรียบร้อย', 'success');
-                                this.closeGradingModal();
-                                setTimeout(() => {
-                                    window.location.reload(); // Reload to reflect changes
-                                }, 1000);
-                            } else {
-                                throw new Error('Failed to save score');
+                                this.showToast('บันทึกคะแนนเข้าสู่ระบบแล้ว', 'success');
+                                setTimeout(() => window.location.reload(), 800);
                             }
-                        } catch (error) {
-                            console.error('Error:', error);
-                            this.showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
-                        } finally {
-                            this.isSubmitting = false;
-                        }
+                        } catch (e) { this.showToast('บันทึกล้มเหลว', 'error'); } 
+                        finally { this.isSubmitting = false; }
                     },
 
                     async quickGrade(id, score, btnEl, maxScore) {
-                        // Find the row and update UI
                         const row = btnEl.closest('tr');
-                        const allBtns = row.querySelectorAll('.flex.items-center.gap-1 button');
-
-                        // Disable all buttons in this row
-                        allBtns.forEach(btn => {
-                            btn.disabled = true;
-                            btn.classList.add('opacity-50');
-                        });
-
+                        const btns = row.querySelectorAll('button');
+                        btns.forEach(b => b.classList.add('opacity-50'));
+                        
                         try {
                             const response = await fetch(`{{ url('typing/admin/submissions') }}/${id}/score`, {
                                 method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                    'Accept': 'application/json'
-                                },
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                                 body: JSON.stringify({ score: score, feedback: '' })
                             });
-
                             if (response.ok) {
-                                // Update button styles - highlight the selected score
-                                allBtns.forEach(btn => {
-                                    const btnScore = parseInt(btn.textContent.trim());
-                                    if (btnScore === score) {
-                                        btn.classList.remove('bg-gray-100', 'hover:bg-primary-100', 'text-gray-700', 'hover:text-primary-600');
-                                        btn.classList.add('bg-primary-600', 'text-white', 'ring-2', 'ring-primary-300');
-                                    } else {
-                                        btn.classList.remove('bg-primary-600', 'text-white', 'ring-2', 'ring-primary-300');
-                                        btn.classList.add('bg-gray-100', 'hover:bg-primary-100', 'text-gray-700', 'hover:text-primary-600');
-                                    }
-                                });
-
-                                // Update score display in the row
-                                const scoreCell = row.querySelector('td:nth-child(6)');
-                                if (scoreCell) {
-                                    scoreCell.innerHTML = `<span class="text-lg font-bold text-primary-600">${score}</span><span class="text-gray-500">/${maxScore}</span>`;
-                                }
-
-                                // Update status badge
-                                const statusCell = row.querySelector('td:nth-child(5)');
-                                if (statusCell) {
-                                    statusCell.innerHTML = '<span class="badge-secondary">ให้คะแนนแล้ว</span>';
-                                }
-
-                                // Remove pending highlight
-                                row.classList.remove('bg-amber-50/50');
-
-                                // Show success toast
-                                this.showToast(`ให้ ${score} คะแนนเรียบร้อย`, 'success');
-                            } else {
-                                throw new Error('Failed to save score');
+                                this.showToast(`บันทึก {{ '${score}' }} คะแนนแล้ว`, 'success');
+                                setTimeout(() => window.location.reload(), 500);
                             }
-                        } catch (error) {
-                            console.error('Error:', error);
-                            this.showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
-                        } finally {
-                            // Re-enable all buttons
-                            allBtns.forEach(btn => {
-                                btn.disabled = false;
-                                btn.classList.remove('opacity-50');
+                        } catch (e) { this.showToast('ผิดพลาด', 'error'); }
+                    },
+
+                    async deleteSubmission(id) {
+                        if(!confirm('ลบงานนี้ถาวร?')) return;
+                        try {
+                            const response = await fetch(`{{ url('typing/admin/submissions') }}/${id}`, {
+                                method: 'DELETE',
+                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                             });
-                        }
+                            if (response.ok) {
+                                this.showToast('ลบงานเรียบร้อย', 'success');
+                                setTimeout(() => window.location.reload(), 800);
+                            }
+                        } catch (e) { this.showToast('ลบล้มเหลว', 'error'); }
                     },
 
-
-
-                async deleteSubmission(id) {
-                    if(!confirm('คุณแน่ใจหรือไม่ที่จะลบงานที่ส่งนี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`{{ url('typing/admin/submissions') }}/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
+                    showToast(message, type = 'success') {
+                        const toast = document.createElement('div');
+                        toast.className = `fixed bottom-8 right-8 px-8 py-4 rounded-[1.5rem] shadow-2xl text-white z-[200] transform transition-all duration-500 translate-y-20 flex items-center gap-3 backdrop-blur-md ${type === 'success' ? 'bg-emerald-500/90' : 'bg-red-500/90'}`;
+                        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} text-xl"></i><span class="font-black text-sm uppercase tracking-widest">${message}</span>`;
+                        document.body.appendChild(toast);
+                        setTimeout(() => toast.classList.remove('translate-y-20'), 10);
+                        setTimeout(() => {
+                            toast.classList.add('opacity-0', 'scale-90');
+                            setTimeout(() => toast.remove(), 500);
+                        }, 3000);
                     }
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    this.showToast(data.message || 'ลบงานเรียบร้อยแล้ว', 'success');
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    this.showToast(data.error || 'เกิดข้อผิดพลาดในการลบงาน', 'error');
-                }
-            } catch (error) {
-                console.error('Delete error:', error);
-                this.showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
-            }
-                    },
-
-            showToast(message, type = 'success') {
-                const toast = document.createElement('div');
-                toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 transform transition-all duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-                toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>${message}`;
-                document.body.appendChild(toast);
-
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'translate-y-2');
-                    setTimeout(() => toast.remove(), 300);
-                }, 2000);
-            }
                 }));
             });
         </script>
+
+        <style>
+            .animate-pulse-slow { animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+            @keyframes pulse { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.1); } }
+            
+            .premium-pagination nav span[aria-current="page"] > span {
+                @apply bg-primary-500 text-white rounded-xl px-4 py-2 font-black border-none shadow-lg shadow-primary-500/30;
+            }
+            .premium-pagination nav a {
+                @apply bg-white text-gray-400 rounded-xl px-4 py-2 font-black border border-gray-100 hover:bg-primary-50 hover:text-primary-500 transition-all mx-1;
+            }
+        </style>
     </div>
 </x-typing-app>
