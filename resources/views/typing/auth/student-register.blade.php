@@ -358,7 +358,7 @@
                                     </div>
                                     <p class="mt-2 text-xs text-slate-500 flex items-center">
                                         <i class="fas fa-info-circle mr-1.5 text-blue-400"></i>
-                                        ภาษาอังกฤษ ตัวเลข หรือ _ อย่างน้อย 4 ตัวอักษร
+                                        ภาษาอังกฤษ ตัวเลข, จุด (.) หรือ _ อย่างน้อย 4 ตัวอักษร
                                     </p>
                                 </div>
 

@@ -45,8 +45,19 @@ class StudentRegistrationController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => 'required|exists:users,id',
-            'username' => 'required|string|min:4|max:50|unique:users,username|regex:/^[a-zA-Z0-9_]+$/',
+            'student_id' => ['required', 'exists:users,id'],
+            'username' => [
+                'required', 
+                'string', 
+                'min:4', 
+                'max:50', 
+                'unique:users,username', 
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^[a-zA-Z0-9_.]+$/', $value)) {
+                        $fail('Username ต้องเป็นตัวอักษรภาษาอังกฤษ ตัวเลข, จุด (.) หรือ _ เท่านั้น');
+                    }
+                }
+            ],
             'password' => ['required', 'confirmed', Password::min(6)],
         ], [
             'student_id.required' => 'กรุณาเลือกชื่อของคุณ',
@@ -55,7 +66,6 @@ class StudentRegistrationController extends Controller
             'username.min' => 'Username ต้องมีอย่างน้อย 4 ตัวอักษร',
             'username.max' => 'Username ต้องไม่เกิน 50 ตัวอักษร',
             'username.unique' => 'Username นี้ถูกใช้งานแล้ว',
-            'username.regex' => 'Username ต้องเป็นตัวอักษรภาษาอังกฤษ ตัวเลข หรือ _ เท่านั้น',
             'password.required' => 'กรุณากรอกรหัสผ่าน',
             'password.confirmed' => 'รหัสผ่านไม่ตรงกัน',
             'password.min' => 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร',
