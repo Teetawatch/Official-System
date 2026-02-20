@@ -535,8 +535,63 @@ class DocxGradingService
      */
     public function gradeSubmission(string $filePath, string $masterText, int $maxScore, bool $checkFormatting = false, ?string $masterFilePath = null): array
     {
-        $submittedText = $this->extractText($filePath);
-        $comparison = $this->compareTexts($submittedText, $masterText);
+        $extractionDone = false;
+        
+        if ($masterFilePath && file_exists($masterFilePath)) {
+            // 1. Try Microservice API first
+            $microserviceUrl = config('services.docx_grader.url', 'http://127.0.0.1:8000/grade');
+            $useMicroservice = env('USE_PYTHON_MICROSERVICE', true);
+
+            if ($useMicroservice) {
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(30)
+                        ->attach('submitted_file', file_get_contents($filePath), 'submitted.docx')
+                        ->attach('master_file', file_get_contents($masterFilePath), 'master.docx')
+                        ->post($microserviceUrl);
+
+                    if ($response->successful()) {
+                        $json = $response->json();
+                        if ($json && !isset($json['error']) && isset($json['accuracy'])) {
+                            $comparison = $json;
+                            $submittedText = $comparison['submitted_text'] ?? $this->extractText($filePath);
+                            $extractionDone = true;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Microservice failed or unreachable, fallback silently
+                }
+            }
+            
+            // 2. Fallback to local shell_exec if API failed
+            if (!$extractionDone) {
+                $pythonScript = base_path('scripts/validate_docx.py');
+                $isShellExecAvailable = function_exists('shell_exec') && 
+                                        !in_array('shell_exec', array_map('trim', explode(',', ini_get('disable_functions'))));
+
+                if (file_exists($pythonScript) && $isShellExecAvailable) {
+                    $escapedScript = escapeshellarg($pythonScript);
+                    $escapedFile = escapeshellarg($filePath);
+                    $escapedMaster = escapeshellarg($masterFilePath);
+                    
+                    $command = "python {$escapedScript} {$escapedFile} {$escapedMaster} 2>&1";
+                    $output = @shell_exec($command);
+                    
+                    $json = json_decode($output, true);
+                    if ($json && !isset($json['error']) && isset($json['accuracy'])) {
+                        $comparison = $json;
+                        $submittedText = $comparison['submitted_text'] ?? $this->extractText($filePath);
+                        $extractionDone = true;
+                    }
+                }
+            }
+        }
+
+        // 3. Final Fallback to pure PHP if all Python methods failed or master absent
+        if (!$extractionDone) {
+            $submittedText = $this->extractText($filePath);
+            $comparison = $this->compareTexts($submittedText, $masterText);
+            $comparison['submitted_text'] = $submittedText;
+        }
 
         // Text accuracy score (if formatting check enabled, this is 70% weight)
         $textAccuracy = $comparison['accuracy'];
