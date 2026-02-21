@@ -9,7 +9,7 @@
             <div>
                 <div class="flex items-center gap-3 mb-2">
                     <span class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-medium border border-white/10">
-                        Admin Dashboard
+                        แดชบอร์ดผู้ดูแล
                     </span>
                     <span class="text-primary-100 text-sm">{{ now()->locale('th')->isoFormat('RDD MMMM YYYY') }}</span>
                 </div>

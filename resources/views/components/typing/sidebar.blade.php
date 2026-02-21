@@ -52,7 +52,7 @@
             </div>
             <div>
                 <h1 class="font-black text-gray-800 text-lg leading-tight tracking-tight">GOV TYPING</h1>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Official System</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">ระบบหลัก</p>
             </div>
         </a>
     </div>
@@ -109,7 +109,7 @@
                         {{ auth()->user()->name }}
                     </p>
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter truncate mt-0.5">
-                        {{ auth()->user()->role === 'admin' ? 'ADMINISTRATOR' : 'CODE: ' . (auth()->user()->student_id ?? '-') }}
+                        {{ auth()->user()->role === 'admin' ? 'ผู้ดูแลระบบ' : 'รหัส: ' . (auth()->user()->student_id ?? '-') }}
                     </p>
                 </div>
                 <a href="{{ url('/typing/profile') }}" class="w-8 h-8 rounded-xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:text-primary-500 hover:shadow-lg transition-all">
