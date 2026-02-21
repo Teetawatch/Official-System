@@ -262,82 +262,100 @@
             <div class="flex items-center justify-between px-2">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
-                        <i class="fas fa-clipboard-list"></i>
+                        <i class="fas fa-keyboard"></i>
                     </div>
-                    <h2 class="text-xl font-bold text-gray-800">งานที่ต้องทำ</h2>
+                    <h2 class="text-xl font-bold text-gray-800">บทเรียนและแบบฝึกหัดพิมพ์</h2>
                 </div>
-                <a href="{{ route('typing.student.assignments') }}" class="group flex items-center gap-2 text-sm font-bold text-indigo-500 hover:text-indigo-600 transition-colors">
-                    ดูทั้งหมด
-                    <span class="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
-                        <i class="fas fa-arrow-right text-xs"></i>
-                    </span>
-                </a>
             </div>
 
-            <!-- Tasks Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @forelse($pendingAssignments as $assignment)
-                    @php
-                        $isUrgent = $assignment->due_date && $assignment->due_date->isFuture() && $assignment->due_date->diffInDays(now()) <= 2;
-                    @endphp
-                    <div class="group relative bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all duration-300">
-                        @if($isUrgent)
-                            <div class="absolute -top-3 -right-3">
-                                <span class="relative flex h-6 w-6">
-                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                  <span class="relative inline-flex rounded-full h-6 w-6 bg-red-500 text-white text-[10px] items-center justify-center shadow-md">
-                                      <i class="fas fa-exclamation"></i>
-                                  </span>
-                                </span>
-                            </div>
-                        @endif
+            <!-- Lessons Grid -->
+            <div class="space-y-8 pb-4">
+                @forelse($lessons->groupBy('chapter') as $chapter => $chapterAssignments)
+                    @php $chapterTitle = $chapter ?: 'บทเรียนทั่วไป'; @endphp
+                    <div>
+                        <div class="flex items-center gap-4 mb-4">
+                            <h3 class="text-sm font-black text-gray-800 bg-gray-100 px-4 py-1.5 rounded-full shadow-sm">{{ $chapterTitle }}</h3>
+                            <div class="h-px flex-1 bg-gray-100"></div>
+                        </div>
                         
-                        <div class="flex items-start gap-4">
-                            <div class="relative flex-shrink-0">
-                                <div class="w-12 h-12 rounded-xl {{ $isUrgent ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500' }} flex items-center justify-center text-xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
-                                    <i class="fas {{ $isUrgent ? 'fa-fire' : 'fa-file-alt' }}"></i>
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-gray-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">{{ $assignment->title }}</h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-xs font-medium px-2 py-0.5 rounded-md bg-gray-100 text-gray-500">
-                                        {{ $assignment->max_score }} คะแนน
-                                    </span>
-                                    @if($isUrgent)
-                                        <span class="text-xs font-bold text-red-500">ด่วน!</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach($chapterAssignments as $assignment)
+                                @php
+                                    $submission = $assignment->submissions->first();
+                                    $isCompleted = $submission && $submission->score !== null;
+                                    $isPending = !$submission;
+                                    $isUrgent = $isPending && $assignment->due_date && $assignment->due_date->isFuture() && $assignment->due_date->diffInDays(now()) <= 2;
+                                @endphp
+                                <div class="group relative bg-white border {{ $isCompleted ? 'border-emerald-100' : 'border-gray-100' }} rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all duration-300 overflow-hidden">
+                                    @if($isCompleted)
+                                        <div class="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none">
+                                            <div class="absolute top-3 -right-6 bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-wider py-1 px-8 rotate-45 shadow-sm">
+                                                สำเร็จ
+                                            </div>
+                                        </div>
+                                    @elseif($isUrgent)
+                                        <div class="absolute -top-3 -right-3">
+                                            <span class="relative flex h-6 w-6">
+                                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                              <span class="relative inline-flex rounded-full h-6 w-6 bg-red-500 text-white text-[10px] items-center justify-center shadow-md">
+                                                  <i class="fas fa-exclamation"></i>
+                                              </span>
+                                            </span>
+                                        </div>
                                     @endif
-                                </div>
-                                
-                                <div class="mt-4 flex items-center justify-between">
-                                    <div class="text-xs text-gray-400 font-medium">
-                                        @if($assignment->due_date)
-                                            <i class="far fa-clock mr-1"></i> {{ $assignment->due_date->format('d/m H:i') }}
-                                        @else
-                                            <span>ไม่กำหนด</span>
-                                        @endif
-                                    </div>
                                     
-                                    @if($assignment->submission_type === 'file')
-                                        <a href="{{ route('typing.student.upload', $assignment->id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200">
-                                            <i class="fas fa-upload"></i> ส่งไฟล์
-                                        </a>
-                                    @else
-                                        <a href="{{ route('typing.student.practice', $assignment->id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
-                                            <i class="fas fa-play"></i> เริ่มงาน
-                                        </a>
-                                    @endif
+                                    <div class="flex items-start gap-4">
+                                        <div class="relative flex-shrink-0">
+                                            <div class="w-12 h-12 rounded-xl {{ $isCompleted ? 'bg-emerald-50 text-emerald-500' : ($isUrgent ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500') }} flex items-center justify-center text-xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300 shadow-inner">
+                                                <i class="fas {{ $isCompleted ? 'fa-check' : ($isUrgent ? 'fa-fire' : 'fa-keyboard') }}"></i>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex-1 min-w-0 pr-2">
+                                            <h3 class="font-bold text-gray-800 line-clamp-1 group-hover:text-indigo-600 transition-colors" title="{{ $assignment->title }}">{{ $assignment->title }}</h3>
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <span class="text-xs font-medium px-2 py-0.5 rounded-md bg-gray-50 text-gray-500 border border-gray-100">
+                                                    คะแนนเต็ม: {{ $assignment->max_score }}
+                                                </span>
+                                                @if($isCompleted)
+                                                    <span class="text-xs font-black text-emerald-600">ได้: {{ $submission->score }}</span>
+                                                @elseif($isUrgent)
+                                                    <span class="text-xs font-bold text-red-500">ด่วน!</span>
+                                                @endif
+                                            </div>
+                                            
+                                            <div class="mt-4 flex items-center justify-between">
+                                                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                                    @if($isCompleted)
+                                                        <i class="fas fa-check-double text-emerald-400 mr-1"></i> ผ่านแล้ว
+                                                    @elseif($assignment->due_date)
+                                                        <i class="far fa-clock mr-1"></i> หมดเขต: {{ $assignment->due_date->format('d/m') }}
+                                                    @else
+                                                        <span><i class="fas fa-infinity mr-1"></i> ไม่มีกำหนด</span>
+                                                    @endif
+                                                </div>
+                                                
+                                                <a href="{{ $assignment->submission_type === 'file' ? route('typing.student.upload', $assignment->id) : route('typing.student.practice', $assignment->id) }}" 
+                                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 {{ $isCompleted ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200' }} text-xs font-bold rounded-lg transition-colors relative z-10">
+                                                    @if($isCompleted)
+                                                        <i class="fas fa-redo text-[10px]"></i> ทำอีกครั้ง
+                                                    @else
+                                                        <i class="fas {{ $assignment->submission_type === 'file' ? 'fa-upload' : 'fa-play' }} text-[10px]"></i> เริ่ม!
+                                                    @endif
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            @endforeach
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-full flex flex-col items-center justify-center py-12 bg-white/50 border border-dashed border-gray-200 rounded-3xl">
-                        <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-check text-2xl text-green-500"></i>
+                    <div class="flex flex-col items-center justify-center py-12 bg-white/50 border border-dashed border-gray-200 rounded-3xl">
+                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-box-open text-2xl text-gray-300"></i>
                         </div>
-                        <p class="text-gray-500 font-medium">เย้! ส่งงานครบทุกชิ้นแล้ว</p>
+                        <p class="text-gray-500 font-medium">ยังไม่มีบทเรียนในขณะนี้</p>
                     </div>
                 @endforelse
             </div>

@@ -131,6 +131,17 @@ class TypingController extends Controller
             'scores' => $chartSubmissions->pluck('score')->values(),
         ];
 
+        // Get all lessons/assignments for practice
+        $lessons = TypingAssignment::where('is_active', true)
+            ->with([
+                'submissions' => function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                }
+            ])
+            ->orderByRaw("CAST(regexp_replace(chapter, '[^0-9]', '') AS UNSIGNED) ASC")
+            ->orderBy('chapter', 'asc')
+            ->get();
+
         return view('typing.student.dashboard', compact(
             'user',
             'submissions',
@@ -142,7 +153,8 @@ class TypingController extends Controller
             'leaderboard',
             'userRank',
             'totalStudents',
-            'chartData'
+            'chartData',
+            'lessons'
         ));
     }
 
