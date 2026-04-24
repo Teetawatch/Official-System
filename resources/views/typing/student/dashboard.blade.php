@@ -228,26 +228,33 @@
             </div>
         </div>
 
-        <!-- Card 4: Avg Score -->
-        <div class="group relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 hover:border-rose-100 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-50 to-transparent rounded-bl-full -mr-10 -mt-10 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
+        <!-- Card 4: Badges Earned -->
+        <div class="group relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 hover:border-indigo-100 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-indigo-50 to-transparent rounded-bl-full -mr-10 -mt-10 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
             <div class="relative flex flex-col h-full justify-between">
                 <div class="flex items-start justify-between mb-4">
-                    <div class="p-3 bg-rose-50 rounded-2xl text-rose-600 group-hover:bg-rose-500 group-hover:text-white transition-colors duration-300">
-                        <i class="fas fa-chart-line text-xl"></i>
+                    <div class="p-3 bg-indigo-50 rounded-2xl text-indigo-600 group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-300">
+                        <i class="fas fa-medal text-xl"></i>
                     </div>
-                    <div class="flex items-center gap-1 text-xs font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">
-                        <i class="fas fa-fire"></i> Performance
+                    <div class="flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                        เหรียญรางวัล
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-gray-800 tracking-tight group-hover:text-rose-600 transition-colors">{{ number_format($avgScore, 1) }}%</h3>
-                    <p class="text-sm text-gray-500 font-medium mt-1">คะแนนเฉลี่ย</p>
+                    <h3 class="text-3xl font-black text-gray-800 tracking-tight group-hover:text-indigo-600 transition-colors">{{ $userBadges->count() }}</h3>
+                    <p class="text-sm text-gray-500 font-medium mt-1">เหรียญที่ได้รับแล้ว</p>
                 </div>
-                <div class="mt-4 pt-4 border-t border-dashed border-gray-100">
-                    <p class="text-xs {{ $avgScore >= 80 ? 'text-emerald-500 font-bold' : ($avgScore >= 60 ? 'text-amber-500' : 'text-rose-500') }}">
-                         @if($avgScore >= 80) ยอดเยี่ยม! 🌟 @elseif($avgScore >= 60) ทำได้ดี! 👍 @else ต้องพยายามเพิ่มนะ 💪 @endif
-                    </p>
+                <div class="mt-4 flex -space-x-2 overflow-hidden">
+                    @foreach($userBadges->take(4) as $badge)
+                        <div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm" title="{{ $badge->name }}">
+                            <i class="fas {{ $badge->icon ?? 'fa-award' }} text-xs"></i>
+                        </div>
+                    @endforeach
+                    @if($userBadges->count() > 4)
+                        <div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-gray-500 text-[10px] font-bold">
+                            +{{ $userBadges->count() - 4 }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -283,10 +290,19 @@
                                 @php
                                     $submission = $assignment->submissions->first();
                                     $isCompleted = $submission && $submission->score !== null;
-                                    $isPending = !$submission;
+                                    $isLocked = $assignment->is_locked;
+                                    $isPending = !$submission && !$isLocked;
                                     $isUrgent = $isPending && $assignment->due_date && $assignment->due_date->isFuture() && $assignment->due_date->diffInDays(now()) <= 2;
                                 @endphp
-                                <div class="group relative bg-white border {{ $isCompleted ? 'border-emerald-100' : 'border-gray-100' }} rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all duration-300 overflow-hidden">
+                                <div class="group relative bg-white border {{ $isCompleted ? 'border-emerald-100' : ($isLocked ? 'border-gray-50 opacity-75' : 'border-gray-100') }} rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-indigo-100 transition-all duration-300 overflow-hidden {{ $isLocked ? 'grayscale-[0.5]' : '' }}">
+                                    @if($isLocked)
+                                        <div class="absolute inset-0 bg-gray-50/10 backdrop-blur-[1px] z-20 flex items-center justify-center pointer-events-none">
+                                            <div class="bg-white/90 p-3 rounded-full shadow-lg transform -rotate-12">
+                                                <i class="fas fa-lock text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     @if($isCompleted)
                                         <div class="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none">
                                             <div class="absolute top-3 -right-6 bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-wider py-1 px-8 rotate-45 shadow-sm">
@@ -326,7 +342,9 @@
                                             
                                             <div class="mt-4 flex items-center justify-between">
                                                 <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                                                    @if($isCompleted)
+                                                    @if($isLocked)
+                                                        <i class="fas fa-info-circle mr-1"></i> ปลดล็อกเมื่อผ่าน {{ $assignment->prerequisite->title ?? 'บทก่อนหน้า' }}
+                                                    @elseif($isCompleted)
                                                         <i class="fas fa-check-double text-emerald-400 mr-1"></i> ผ่านแล้ว
                                                     @elseif($assignment->due_date)
                                                         <i class="far fa-clock mr-1"></i> หมดเขต: {{ $assignment->due_date->format('d/m') }}
@@ -335,14 +353,20 @@
                                                     @endif
                                                 </div>
                                                 
-                                                <a href="{{ $assignment->submission_type === 'file' ? route('typing.student.upload', $assignment->id) : route('typing.student.practice', $assignment->id) }}" 
-                                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 {{ $isCompleted ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200' }} text-xs font-bold rounded-lg transition-colors relative z-10">
-                                                    @if($isCompleted)
-                                                        <i class="fas fa-redo text-[10px]"></i> ทำอีกครั้ง
-                                                    @else
-                                                        <i class="fas {{ $assignment->submission_type === 'file' ? 'fa-upload' : 'fa-play' }} text-[10px]"></i> เริ่ม!
-                                                    @endif
-                                                </a>
+                                                @if(!$isLocked)
+                                                    <a href="{{ $assignment->submission_type === 'file' ? route('typing.student.upload', $assignment->id) : route('typing.student.practice', $assignment->id) }}" 
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 {{ $isCompleted ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200' }} text-xs font-bold rounded-lg transition-colors relative z-30">
+                                                        @if($isCompleted)
+                                                            <i class="fas fa-redo text-[10px]"></i> ทำอีกครั้ง
+                                                        @else
+                                                            <i class="fas {{ $assignment->submission_type === 'file' ? 'fa-upload' : 'fa-play' }} text-[10px]"></i> เริ่ม!
+                                                        @endif
+                                                    </a>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
+                                                        <i class="fas fa-lock text-[10px]"></i> ยังไม่ปลดล็อก
+                                                    </span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

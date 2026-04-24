@@ -42,6 +42,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Get badges earned by user
+     */
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withPivot('awarded_at')
+            ->withTimestamps();
+    }
+
+    /**
      * Get rewards owned by user
      */
     public function rewards()

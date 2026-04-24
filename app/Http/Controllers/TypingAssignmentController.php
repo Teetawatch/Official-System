@@ -27,7 +27,8 @@ class TypingAssignmentController extends Controller
      */
     public function create()
     {
-        return view('typing.admin.assignments.create');
+        $assignments = TypingAssignment::select('id', 'title')->orderBy('chapter')->get();
+        return view('typing.admin.assignments.create', compact('assignments'));
     }
 
     /**
@@ -37,6 +38,9 @@ class TypingAssignmentController extends Controller
     {
         $validated = $request->validate([
             'chapter' => 'nullable|string|max:255',
+            'level' => 'required|integer|min:1',
+            'prerequisite_id' => 'nullable|exists:typing_assignments,id',
+            'required_score' => 'required|numeric|min:0|max:100',
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
             'master_file' => 'nullable|file|mimes:docx|max:10240', // 10MB max
@@ -96,7 +100,8 @@ class TypingAssignmentController extends Controller
     public function edit($id)
     {
         $assignment = TypingAssignment::findOrFail($id);
-        return view('typing.admin.assignments.edit', compact('assignment'));
+        $assignments = TypingAssignment::where('id', '!=', $id)->select('id', 'title')->orderBy('chapter')->get();
+        return view('typing.admin.assignments.edit', compact('assignment', 'assignments'));
     }
 
     /**
@@ -108,6 +113,9 @@ class TypingAssignmentController extends Controller
 
         $validated = $request->validate([
             'chapter' => 'nullable|string|max:255',
+            'level' => 'required|integer|min:1',
+            'prerequisite_id' => 'nullable|exists:typing_assignments,id',
+            'required_score' => 'required|numeric|min:0|max:100',
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
             'master_file' => 'nullable|file|mimes:docx|max:10240', // 10MB max

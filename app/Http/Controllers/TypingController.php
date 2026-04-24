@@ -6,10 +6,17 @@ use Illuminate\Http\Request;
 use App\Models\TypingAssignment;
 use App\Models\TypingSubmission;
 use App\Models\User;
+use App\Services\BadgeService;
 use Illuminate\Support\Facades\Auth;
 
 class TypingController extends Controller
 {
+    protected $badgeService;
+
+    public function __construct(BadgeService $badgeService)
+    {
+        $this->badgeService = $badgeService;
+    }
     /**
      * Get effective deadline for an assignment.
      * If due_date is set at midnight (00:00:00), treat it as end of day (23:59:59).
@@ -143,6 +150,14 @@ class TypingController extends Controller
             })
             ->values();
 
+        // Attach locked status to lessons
+        foreach ($lessons as $lesson) {
+            $lesson->is_locked = !$lesson->isUnlockedForUser($user->id);
+        }
+
+        // Get user badges
+        $userBadges = $user->badges()->latest()->take(6)->get();
+
         return view('typing.student.dashboard', compact(
             'user',
             'submissions',
@@ -155,7 +170,8 @@ class TypingController extends Controller
             'userRank',
             'totalStudents',
             'chartData',
-            'lessons'
+            'lessons',
+            'userBadges'
         ));
     }
 
@@ -338,10 +354,14 @@ class TypingController extends Controller
             'keystrokes_data' => $validated['keystrokes_data'],
         ]);
 
+        // Check for new badges
+        $newBadges = $this->badgeService->checkAndAwardBadges(Auth::user(), $submission);
+
         return response()->json([
             'success' => true,
             'message' => 'บันทึกผลการพิมพ์เรียบร้อยแล้ว',
-            'submission_id' => $submission->id
+            'submission_id' => $submission->id,
+            'new_badges' => $newBadges
         ]);
     }
 
@@ -761,6 +781,10 @@ class TypingController extends Controller
         \App\Models\User::where('role', 'admin')->get()->each(function ($admin) use ($submission) {
             $admin->notify(new \App\Notifications\SubmissionReceived($submission));
         });
+
+        // Check for new badges (optional for file upload since it's not graded yet, 
+        // but some badges like "Submission Count" or "Cumulative Time" can still be awarded if we count them here)
+        $this->badgeService->checkAndAwardBadges(Auth::user(), $submission);
 
         return redirect()->route('typing.student.assignments')
             ->with('success', 'อัปโหลดไฟล์เรียบร้อยแล้ว รอการตรวจจากอาจารย์');
