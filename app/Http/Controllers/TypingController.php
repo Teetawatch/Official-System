@@ -101,15 +101,13 @@ class TypingController extends Controller
             ->take(5)
             ->get();
 
-        // Get user rank
+        // Get user rank (More efficient way)
+        $userScore = TypingSubmission::where('user_id', $user->id)->whereNotNull('score')->sum('score') ?? 0;
         $userRank = User::where('role', 'student')
             ->withSum('typingSubmissions', 'score')
-            ->get()
-            ->sortByDesc('typing_submissions_sum_score')
-            ->values()
-            ->search(function ($u) use ($user) {
-                return $u->id === $user->id;
-            }) + 1;
+            ->get() // Still need to get to sort in PHP if we want to be 100% sure about the sum
+            ->where('typing_submissions_sum_score', '>', $userScore)
+            ->count() + 1;
 
         $totalStudents = User::where('role', 'student')->count();
 
@@ -138,9 +136,12 @@ class TypingController extends Controller
                     $query->where('user_id', $user->id);
                 }
             ])
-            ->orderByRaw("CAST(regexp_replace(chapter, '[^0-9]', '') AS UNSIGNED) ASC")
-            ->orderBy('chapter', 'asc')
-            ->get();
+            ->get()
+            ->sortBy(function ($assignment) {
+                // Compatible way to sort by number in chapter (e.g. "Chapter 1", "Chapter 2")
+                return (int) preg_replace('/[^0-9]/', '', $assignment->chapter);
+            })
+            ->values();
 
         return view('typing.student.dashboard', compact(
             'user',
@@ -181,10 +182,11 @@ class TypingController extends Controller
                     $subQ->where('user_id', $userId);
                 });
             })
-            ->orderByRaw("CAST(regexp_replace(chapter, '[^0-9]', '') AS UNSIGNED) ASC")
-            ->orderBy('chapter', 'asc')
-            ->latest()
-            ->get();
+            ->get()
+            ->sortBy(function ($assignment) {
+                return (int) preg_replace('/[^0-9]/', '', $assignment->chapter);
+            })
+            ->values();
 
         // Calculate stats
         $totalAssignments = TypingAssignment::where('is_active', true)->count();
