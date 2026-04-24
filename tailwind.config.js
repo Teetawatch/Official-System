@@ -12,8 +12,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Outfit', 'Prompt', ...defaultTheme.fontFamily.sans],
-                kanit: ['Outfit', 'Prompt', 'sans-serif'],
+                sans: ['Sarabun', ...defaultTheme.fontFamily.sans],
+                kanit: ['Sarabun', 'sans-serif'],
             },
             colors: {
                 primary: {
